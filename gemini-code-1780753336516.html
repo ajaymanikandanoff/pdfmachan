@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Machan — Fast. Secure. No ads.</title>
+    
+    <!-- Dynamic Favicon configuration mapping to the same logo asset -->
+    <link rel="icon" type="image/png" href="logo.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';</script>
+
+    <style>
+        :root {
+            --red: #E8483A;
+            --red-soft: rgba(232,72,58,0.15);
+            --green: #3AB87A;
+            --font-h: 'Syne', sans-serif;
+            --font-b: 'DM Sans', sans-serif;
+            --r: 12px;
+            --r-sm: 7px;
+            --gold: #A37E2C;
+        }
+        [data-theme="dark"] {
+            --bg:      #0D0D12;
+            --surface: #14141C;
+            --surface2:#1C1C27;
+            --surface3:#242432;
+            --line:    rgba(255,255,255,0.06);
+            --line2:   rgba(255,255,255,0.11);
+            --tx:      #EEEEF8;
+            --tx2:     #6868A0;
+            --tx3:     #35354A;
+            --white-glow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+            --avatar-shadow: drop-shadow(0px 15px 25px rgba(255, 255, 255, 0.1));
+        }
+        [data-theme="light"] {
+            --bg:      #F2F2F8;
+            --surface: #FFFFFF;
+            --surface2:#EAEAF4;
+            --surface3:#E0E0EE;
+            --line:    rgba(0,0,0,0.07);
+            --line2:   rgba(0,0,0,0.13);
+            --tx:      #0D0D1A;
+            --tx2:     #5A5A80;
+            --tx3:     #AAAAC4;
+            --white-glow: 0px 8px 24px rgba(0, 0, 0, 0.04);
+            --avatar-shadow: drop-shadow(0px 12px 24px rgba(0, 0, 0, 0.15));
+        }
+
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{font-family:var(--font-b);background:var(--bg);color:var(--tx);scroll-behavior:smooth}
+        body{min-height:100vh;display:flex;flex-direction:column}
+        main{flex:1}
+
+        /* MOBILE RESPONSIVE NAV BAR */
+        nav {
+            position:sticky;top:0;z-index:99;
+            background:var(--bg);
+            border-bottom:1px solid var(--line);
+        }
+        .nav-inner {
+            max-width:1160px;margin:0 auto;
+            display:flex;align-items:center;justify-content:space-between;
+            padding:12px 16px;
+        }
+        .logo {
+            font-family:var(--font-h);font-size:1rem;font-weight:800;
+            text-decoration:none;color:var(--tx);
+            display:flex;align-items:center;gap:6px;letter-spacing:-0.02em;
+        }
+        @media (min-width: 480px) { .logo { font-size:1.1rem; gap:8px; } }
+        
+        .logo-img-mark {
+            width:28px;
+            height:28px;
+            border-radius:50%;
+            object-fit:cover;
+            flex-shrink:0;
+            border: 1px solid var(--line2);
+            background: transparent;
+        }
+        @media (min-width: 480px) { .logo-img-mark { width:30px; height:30px; } }
+
+        .logo em{font-style:normal;color:var(--red)}
+        .nav-links{display:flex;align-items:center;gap:2px;list-style:none}
+        .nav-links a {
+            font-size:0.8rem;font-weight:500;color:var(--tx2);
+            text-decoration:none;padding:5px 8px;border-radius:6px;
+            transition:all 0.18s;
+            cursor: pointer;
+        }
+        @media (min-width: 480px) { .nav-links a { font-size:0.85rem; padding:6px 10px; } }
+        .nav-links a:hover{color:var(--tx);background:var(--surface2)}
+        
+        .theme-pill {
+            width:30px;height:30px;border-radius:7px;
+            background:var(--surface2);border:1px solid var(--line2);
+            color:var(--tx2);cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.75rem;transition:all 0.18s;margin-left:2px;
+        }
+        @media (min-width: 480px) { .theme-pill { width:34px; height:34px; font-size:0.8rem; margin-left:4px; } }
+        .theme-pill:hover{color:var(--tx)}
+
+        /* HERO CLEAN DESIGN WITH FULL PHONE VIEWPORT SCALE */
+        .hero{
+            padding:32px 16px 40px;
+            position:relative;
+            overflow:hidden;
+        }
+        @media (min-width: 768px) { .hero { padding: 48px 20px 40px; } }
+        
+        .hero::after{
+            content:'';
+            position:absolute;top:-60px;left:50%;transform:translateX(-50%);
+            width:100%;max-width:500px;height:340px;
+            background:radial-gradient(ellipse,rgba(232,72,58,0.06) 0%,transparent 68%);
+            pointer-events:none;
+        }
+        .hero-layout {
+            max-width:960px;margin:0 auto;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            gap:24px;text-align:center;
+        }
+        @media (min-width: 768px) {
+            .hero-layout {
+                flex-direction:row-reverse;text-align:left;justify-content:space-between;
+                gap:32px;
+            }
+            .hero-txt-block {
+                flex:1;max-width:520px;
+            }
+        }
+        .hero-img-block {
+            flex-shrink:0;
+            width:100%;
+            max-width:200px; /* Reduced for smooth layout on narrow mobile screens */
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background: transparent;
+        }
+        @media (min-width: 480px) { .hero-img-block { max-width:240px; } }
+        @media (min-width: 768px) { .hero-img-block { max-width:320px; } }
+        
+        .hero-avatar {
+            width:100%;
+            height:auto;
+            object-fit:contain;
+            background: transparent;
+            box-shadow: none !important; 
+            border: none !important;
+            filter: var(--avatar-shadow);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hero-avatar:hover {
+            transform: scale(1.03);
+        }
+
+        .hero-eyebrow{
+            display:inline-flex;align-items:center;gap:6px;
+            font-size:0.7rem;font-weight:600;letter-spacing:0.04em;
+            color:var(--red);
+            background:var(--red-soft);
+            border:1px solid rgba(232,72,58,0.22);
+            padding:4px 10px;border-radius:100px;
+            margin-bottom:14px;
+        }
+        @media (min-width: 480px) { .hero-eyebrow { font-size:0.75rem; padding:5px 12px; margin-bottom:20px; } }
+        
+        .hero-eyebrow .dot{
+            width:5px;height:5px;border-radius:50%;
+            background:var(--red);
+            animation:blink 2.2s ease-in-out infinite;
+        }
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0.35}}
+        
+        .hero h1 {
+            font-family:var(--font-h);
+            font-size: clamp(2.2rem, 8vw, 4.4rem);
+            font-weight:800;
+            letter-spacing:-0.045em;
+            line-height:0.95;
+            margin-bottom:12px;
+        }
+        .hero h1 .r{color:var(--red)}
+        .hero p{
+            font-size:0.95rem;color:var(--tx2);
+            line-height:1.5;max-width:400px;
+            font-weight: 500;
+        }
+        @media (min-width: 480px) { .hero p { font-size:1.05rem; line-height:1.6; } }
+        @media (max-width: 767px) { .hero p { margin:0 auto; } }
+
+        /* MOBILE RESPONSIVE TOOLS WRAP & GRID MAPS */
+        .tools-wrap{max-width:1160px;margin:0 auto;padding:16px 16px 64px}
+        @media (min-width: 480px) { .tools-wrap { padding:16px 20px 64px; } }
+        
+        .section-eyebrow{
+            font-size:0.72rem;font-weight:600;text-transform:uppercase;
+            letter-spacing:0.1em;color:var(--tx3);margin-bottom:16px;
+        }
+        @media (max-width: 767px) { .section-eyebrow { text-align:center; } }
+        
+        .grid{
+            display:grid;
+            grid-template-columns: 1fr; /* Default single column on extra thin smartphone frames */
+            gap:12px;
+        }
+        @media (min-width: 480px) { .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px; } }
+        @media (min-width: 768px) { .grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); } }
+
+        .card{
+            background:var(--surface);
+            border:1px solid var(--line);
+            border-radius:var(--r);
+            padding:16px;
+            cursor:pointer;
+            display:flex;flex-direction:column;gap:10px;
+            transition:border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            position:relative;
+            box-shadow: var(--white-glow);
+        }
+        @media (min-width: 480px) { .card { padding:20px; gap:12px; } }
+        
+        .card:hover{
+            border-color:rgba(232,72,58,0.25);
+            transform:translateY(-2px);
+            box-shadow: 0px 6px 20px rgba(0,0,0,0.05);
+        }
+        .card-ico{
+            width:36px;height:36px;border-radius:9px;
+            background:var(--surface2);
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.95rem;color:var(--tx2);
+            transition:background 0.2s,color 0.2s;
+        }
+        @media (min-width: 480px) { .card-ico { width:38px; height:38px; font-size:1rem; } }
+        .card:hover .card-ico{background:var(--red);color:#fff}
+        
+        .card h3{
+            font-family:var(--font-h);font-size:0.9rem;font-weight:700;
+            letter-spacing:-0.01em;
+        }
+        @media (min-width: 480px) { .card h3 { font-size:0.95rem; } }
+        
+        .card p{font-size:0.8rem;color:var(--tx2);line-height:1.4;flex:1}
+        @media (min-width: 480px) { .card p { font-size:0.82rem; line-height:1.5; } }
+        
+        .card-hint{
+            font-size:0.72rem;color:var(--tx3);
+            display:flex;align-items:center;gap:4px;
+        }
+        @media (min-width: 480px) { .card-hint { font-size:0.75rem; } }
+        .card:hover .card-hint{color:var(--red)}
+
+        /* WORKSPACE COMPONENT RESPONSIVENESS */
+        .workspace-wrap{max-width:760px;margin:0 auto;padding:16px}
+        @media (min-width: 480px) { .workspace-wrap { padding:20px; } }
+        
+        .back-btn{
+            display:inline-flex;align-items:center;gap:7px;
+            background:none;border:none;cursor:pointer;
+            font-family:var(--font-b);font-size:0.82rem;font-weight:500;
+            color:var(--tx2);margin-bottom:14px;padding:0;
+        }
+        @media (min-width: 480px) { .back-btn { font-size:0.85rem; margin-bottom:16px; } }
+        .back-btn:hover{color:var(--tx)}
+        
+        .panel{
+            background:var(--surface);
+            border:1px solid var(--line);
+            border-radius:var(--r);
+            padding:16px;
+            box-shadow: var(--white-glow);
+        }
+        @media (min-width: 480px) { .panel { padding:24px; } }
+        
+        .panel-title{
+            font-family:var(--font-h);font-size:1.2rem;font-weight:800;
+            letter-spacing:-0.03em;margin-bottom:4px;
+        }
+        @media (min-width: 480px) { .panel-title { font-size:1.35rem; margin-bottom:6px; } }
+        .panel-desc{font-size:0.8rem;color:var(--tx2);margin-bottom:16px}
+        @media (min-width: 480px) { .panel-desc { font-size:0.85rem; margin-bottom:20px; } }
+
+        /* UPLOAD PORT ENGINE */
+        .drop-zone{
+            border:2px dashed var(--line2);border-radius:var(--r);
+            padding:28px 12px;text-align:center;cursor:pointer;
+            position:relative;transition:border-color 0.18s,background 0.18s;
+            background:var(--bg);
+        }
+        @media (min-width: 480px) { .drop-zone { padding:36px 16px; } }
+        .drop-zone:hover{border-color:var(--red);background:rgba(232,72,58,0.03)}
+        .drop-zone i{font-size:1.6rem;color:var(--tx3);margin-bottom:8px;display:block}
+        @media (min-width: 480px) { .drop-zone i { font-size:1.8rem; margin-bottom:10px; } }
+        .drop-zone strong{font-size:0.85rem;display:block;margin-bottom:4px}
+        @media (min-width: 480px) { .drop-zone strong { font-size:0.9rem; } }
+        .drop-zone span{font-size:0.75rem;color:var(--tx2)}
+        @media (min-width: 480px) { .drop-zone span { font-size:0.8rem; } }
+        .drop-zone span b{color:var(--red);font-weight:600}
+        .file-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+        /* FILE RENDERING LIST */
+        .file-list{display:flex;flex-direction:column;gap:6px;margin:14px 0}
+        @media (min-width: 480px) { .file-list { gap:8px; margin:16px 0; } }
+        .fitem{
+            display:flex;align-items:center;justify-content:space-between;
+            background:var(--surface2);border:1px solid var(--line);
+            border-radius:var(--r-sm);padding:8px 10px;gap:8px;
+        }
+        @media (min-width: 480px) { .fitem { padding:10px 12px; gap:10px; } }
+        .fitem-left{display:flex;align-items:center;gap:8px;overflow:hidden;}
+        @media (min-width: 480px) { .fitem-left { gap:10px; } }
+        .fitem-left i{color:var(--red);font-size:0.9rem;flex-shrink:0;}
+        @media (min-width: 480px) { .fitem-left i { font-size:1rem; } }
+        
+        /* Strict sizing truncate bounds to keep names clean on small smartphone windows */
+        .fitem-name{font-size:0.8rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+        @media (min-width: 360px) { .fitem-name { max-width: 170px; } }
+        @media (min-width: 480px) { .fitem-name { font-size:0.85rem; max-width: 260px; } }
+        @media (min-width: 768px) { .fitem-name { max-width: 450px; } }
+        
+        .fitem-size{font-size:0.7rem;color:var(--tx2);margin-top:1px}
+        @media (min-width: 480px) { .fitem-size { font-size:0.75rem; } }
+        .fitem-btns{display:flex;gap:2px;flex-shrink:0;}
+        .ico-btn{
+            background:none;border:none;cursor:pointer;
+            color:var(--tx3);width:24px;height:24px;border-radius:5px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.7rem;
+        }
+        @media (min-width: 480px) { .ico-btn { width:26px; height:26px; font-size:0.75rem; } }
+        .ico-btn:hover{background:var(--surface3);color:var(--red)}
+
+        /* COMPRESSION CONFIG SLIDERS & SETTINGS BOX */
+        .settings-box{
+            background:var(--bg);border:1px solid var(--line);
+            border-radius:var(--r);padding:12px;margin:12px 0;
+        }
+        @media (min-width: 480px) { .settings-box { padding:16px; margin:16px 0; } }
+        .settings-lbl{
+            font-size:0.68rem;font-weight:600;text-transform:uppercase;
+            letter-spacing:0.08em;color:var(--tx3);margin-bottom:10px;
+        }
+        @media (min-width: 480px) { .settings-lbl { font-size:0.72rem; margin-bottom:12px; } }
+        .presets{display:flex;gap:6px;margin-bottom:12px}
+        @media (min-width: 480px) { .presets { gap:7px; margin-bottom:14px; } }
+        .preset{
+            flex:1;padding:8px 4px;border-radius:var(--r-sm);
+            border:1px solid var(--line2);background:var(--surface);
+            color:var(--tx2);font-family:var(--font-b);
+            font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.18s;
+            text-align:center;
+        }
+        @media (min-width: 480px) { .preset { padding:9px; font-size:0.8rem; } }
+        .preset:hover{border-color:var(--red);color:var(--tx)}
+        .preset.on{background:var(--red);border-color:var(--red);color:#fff}
+        .slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+        .slider-header span{font-size:0.75rem;color:var(--tx2)}
+        @media (min-width: 480px) { .slider-header span { font-size:0.8rem; } }
+        .slider-val{font-weight:700;color:var(--red) !important}
+        input[type=range]{
+            width:100%;-webkit-appearance:none;height:3px;
+            background:var(--surface3);border-radius:2px;outline:none;
+        }
+        input[type=range]::-webkit-slider-thumb{
+            -webkit-appearance:none;width:16px;height:16px;
+            border-radius:50%;background:var(--red);cursor:pointer;
+            border:2px solid var(--surface);
+            box-shadow:0 0 0 3px rgba(232,72,58,0.2);
+        }
+        .radio-opts{display:flex;flex-direction:column;gap:6px}
+        @media (min-width: 480px) { .radio-opts { gap:8px; } }
+        .radio-opt{
+            display:flex;align-items:center;gap:8px;
+            padding:10px;border:1px solid var(--line2);
+            border-radius:var(--r-sm);cursor:pointer;
+        }
+        @media (min-width: 480px) { .radio-opt { padding:11px 12px; gap:9px; } }
+        .radio-opt:hover{border-color:var(--red)}
+        .radio-opt input{accent-color:var(--red);flex-shrink:0;}
+        .radio-opt label{font-size:0.78rem;font-weight:500;cursor:pointer;line-height:1.4}
+        @media (min-width: 480px) { .radio-opt label { font-size:0.82rem; } }
+        .range-row{display:flex;gap:6px;margin-top:6px}
+        @media (min-width: 480px) { .range-row { gap:8px; margin-top:8px; } }
+        .num-input{
+            flex:1;width:100%;padding:8px 10px;
+            background:var(--surface);border:1px solid var(--line2);
+            border-radius:var(--r-sm);color:var(--tx);
+            font-family:var(--font-b);font-size:0.8rem;outline:none;
+        }
+        @media (min-width: 480px) { .num-input { padding:9px 12px; font-size:0.85rem; } }
+        .num-input:focus{border-color:var(--red)}
+
+        /* TRACK PROGRESS STATUS */
+        .pbar-wrap{
+            height:2px;background:var(--surface3);
+            border-radius:2px;overflow:hidden;
+            margin:12px 0;display:none;
+        }
+        @media (min-width: 480px) { .pbar-wrap { margin:14px 0; } }
+        .pbar-fill{
+            height:100%;width:0%;
+            background:linear-gradient(90deg,var(--red),#FF8066);
+            transition:width 0.1s linear;
+        }
+
+        /* OPERATIONAL CTA BUTTON */
+        .btn-go{
+            display:inline-flex;align-items:center;justify-content:center;gap:7px;
+            background:var(--red);color:#fff;
+            border:none;border-radius:var(--r-sm);
+            padding:11px 20px;font-size:0.85rem;font-weight:600;
+            font-family:var(--font-b);cursor:pointer;width:100%;
+            box-shadow:0 4px 14px rgba(232,72,58,0.25);
+        }
+        @media (min-width: 480px) { .btn-go { width: auto; padding:11px 24px; font-size:0.88rem; } }
+        .btn-go:hover { filter:brightness(1.1); }
+
+        /* ANALYTICS STORAGE BLOCKS */
+        .stats{
+            display:flex;flex-direction:column;gap:6px;margin-top:12px;
+        }
+        @media (min-width: 480px) { .stats { flex-direction:row; gap:10px; margin-top:14px; } }
+        .stat{
+            flex:1;background:rgba(58,184,122,0.07);
+            border:1px solid rgba(58,184,122,0.18);
+            border-radius:var(--r-sm);padding:10px;text-align:center;
+        }
+        @media (min-width: 480px) { .stat { padding:12px; } }
+        .stat-n{font-family:var(--font-h);font-size:1.15rem;font-weight:800;color:var(--green)}
+        @media (min-width: 480px) { .stat-n { font-size:1.25rem; } }
+        .stat-l{font-size:0.65rem;color:var(--tx2);margin-top:2px;text-transform:uppercase;letter-spacing:0.06em}
+        @media (min-width: 480px) { .stat-l { font-size:0.7rem; } }
+        .stat.orig .stat-n{color:var(--tx2)}
+
+        /* SYSTEM TOAST ALERTS */
+        #toasts{position:fixed;bottom:12px;right:12px;left:12px;z-index:999;display:flex;flex-direction:column;gap:6px}
+        @media (min-width: 480px) { #toasts { left:auto; width:300px; bottom:22px; right:22px; gap:8px; } }
+        .toast{
+            display:flex;align-items:center;gap:8px;
+            padding:10px 12px;border-radius:var(--r-sm);
+            font-size:0.78rem;font-weight:500;
+            background:var(--surface2);border:1px solid var(--line2);
+            box-shadow:0 6px 20px rgba(0,0,0,0.25);
+            animation:tin 0.2s ease;transition:opacity 0.28s;
+        }
+        @media (min-width: 480px) { .toast { padding:11px 14px; font-size:0.82rem; gap:9px; } }
+        @keyframes tin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+        .toast.ok{border-left:2.5px solid var(--green)}
+        .toast.ok i{color:var(--green)}
+        .toast.err{border-left:2.5px solid var(--red)}
+        .toast.err i{color:var(--red)}
+
+        /* CUSTOM MATCHED SOCIAL LINK DESIGN FOOTER */
+        .footer-premium {
+            padding: 32px 16px 40px;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (min-width: 480px) { .footer-premium { padding: 40px 20px 48px; } }
+        .footer-divider-container {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .f-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--line2), transparent);
+        }
+        .f-dot {
+            width: 5px;
+            height: 5px;
+            background-color: var(--gold);
+            border-radius: 50%;
+        }
+        .footer-copyright {
+            font-family: var(--font-b);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.22);
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+        @media (min-width: 480px) { .footer-copyright { font-size:0.85rem; margin-bottom:22px; } }
+        [data-theme="light"] .footer-copyright {
+            color: rgba(0, 0, 0, 0.35);
+        }
+        .footer-socials {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        @media (min-width: 480px) { .footer-socials { gap:24px; } }
+        .social-link {
+            font-size: 1.1rem;
+            color: var(--tx2);
+            transition: color 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (min-width: 480px) { .social-link { font-size:1.15rem; } }
+        .social-link:hover {
+            color: var(--tx);
+            transform: translateY(-1px);
+        }
+        .social-sep {
+            width: 1px;
+            height: 14px;
+            background-color: var(--line2);
+        }
+
+        .hidden{display:none!important}
+    </style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<nav>
+    <div class="nav-inner">
+        <a href="#" id="nav-logo-link" class="logo">
+            <img src="logo.png" alt="Mini Logo" class="logo-img-mark">
+            PDF<em>Machan</em>
+        </a>
+        <div style="display:flex;align-items:center">
+            <ul class="nav-links">
+                <li><a id="link-home" href="#home">Home</a></li>
+                <li><a id="link-tools" href="#tools">Tools</a></li>
+            </ul>
+            <button id="theme-btn" class="theme-pill" title="Toggle theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<main>
+    <section id="home" class="hero">
+        <div class="hero-layout">
+            <div class="hero-img-block">
+                <img src="logo.png" alt="PDF Machan Character Logo" class="hero-avatar">
+            </div>
+            
+            <div class="hero-txt-block">
+                <div class="hero-eyebrow">
+                    <div class="dot"></div>
+                    your files never leave your device
+                </div>
+                <h1>PDF<span class="r">.</span><br>Machan</h1>
+                <p>Fast. Secure. No ads.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- workspace -->
+    <section id="workspace" class="hidden">
+        <div class="workspace-wrap">
+            <button id="back-btn" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i> back to tools
+            </button>
+            <div class="panel">
+                <h2 id="tool-title" class="panel-title">—</h2>
+                <p id="tool-desc" class="panel-desc">—</p>
+                <div id="tool-body"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- tools grid -->
+    <section id="tools">
+        <div class="tools-wrap">
+            <p class="section-eyebrow">what do you need?</p>
+            <div class="grid">
+                <div class="card" data-tool="merge">
+                    <div class="card-ico"><i class="fa-solid fa-object-group"></i></div>
+                    <h3>Merge PDFs</h3>
+                    <p>Stitch multiple PDFs into one, in whatever order you want.</p>
+                    <div class="card-hint"><i class="fa-solid fa-arrow-right"></i> open tool</div>
+                </div>
+                <div class="card" data-tool="split">
+                    <div class="card-ico"><i class="fa-solid fa-scissors"></i></div>
+                    <h3>Split PDF</h3>
+                    <p>Pull out a page range, or break every page into its own file.</p>
+                    <div class="card-hint"><i class="fa-solid fa-arrow-right"></i> open tool</div>
+                </div>
+                <div class="card" data-tool="compress">
+                    <div class="card-ico"><i class="fa-solid fa-compress-arrows-alt"></i></div>
+                    <h3>Compress PDF</h3>
+                    <p>Shrink the file size — good for email, bad excuses, and slow wifi.</p>
+                    <div class="card-hint"><i class="fa-solid fa-arrow-right"></i> open tool</div>
+                </div>
+                <div class="card" data-tool="pdf2img">
+                    <div class="card-ico"><i class="fa-solid fa-file-image"></i></div>
+                    <h3>PDF → Images</h3>
+                    <p>Each page becomes a crisp PNG. Zipped and ready to download.</p>
+                    <div class="card-hint"><i class="fa-solid fa-arrow-right"></i> open tool</div>
+                </div>
+                <div class="card" data-tool="img2pdf">
+                    <div class="card-ico"><i class="fa-solid fa-images"></i></div>
+                    <h3>Images → PDF</h3>
+                    <p>Got a bunch of JPGs or PNGs? Turn them into a single PDF.</p>
+                    <div class="card-hint"><i class="fa-solid fa-arrow-right"></i> open tool</div>
+                </div>
+                <div class="card" data-tool="jpg2png">
+                    <div class="card-ico"><i class="fa-solid fa-image"></i></div>
+                    <h3>JPG → PNG</h3>
+                    <p>Convert JPGs to lossless PNG images directly into your downloads file list.</p>
+                    <div class="card-hint"><i class="fa-solid fa-arrow-right"></i> open tool</div>
+                </div>
+                <div class="card" data-tool="png2jpg">
+                    <div class="card-ico"><i class="fa-regular fa-image"></i></div>
+                    <h3>PNG → JPG</h3>
+                    <p>Convert PNGs to standard compressed JPG images instantly without ZIP layers.</p>
+                    <div class="card-hint"><i class="fa-solid fa-arrow-right"></i> open tool</div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- FOOTER CORE PANEL -->
+<footer class="footer-premium">
+    <div class="footer-divider-container">
+        <div class="f-line"></div>
+        <div class="f-dot"></div>
+        <div class="f-line"></div>
+    </div>
+    
+    <div class="footer-copyright">
+        &copy; 2026 AJAY M
+    </div>
+    
+    <div class="footer-socials">
+        <a href="https://www.instagram.com/a.jx.y" target="_blank" rel="noopener" class="social-link" title="Instagram">
+            <i class="fa-brands fa-instagram"></i>
+        </a>
+        <div class="social-sep"></div>
+        <a href="https://www.linkedin.com/in/ajaymanikandanoff-in" target="_blank" rel="noopener" class="social-link" title="LinkedIn">
+            <i class="fa-brands fa-linkedin-in"></i>
+        </a>
+        <div class="social-sep"></div>
+        <a href="https://github.com/ajaymanikandanoff" target="_blank" rel="noopener" class="social-link" title="GitHub">
+            <i class="fa-brands fa-github"></i>
+        </a>
+    </div>
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const state = {
+        tool: null,
+        files: [],
+        theme: localStorage.getItem("pm-theme") || "dark"
+    };
+
+    const $ = id => document.getElementById(id);
+    const themeBtn   = $("theme-btn");
+    const toolsEl    = $("tools");
+    const workEl     = $("workspace");
+    const backBtn    = $("back-btn");
+    const titleEl    = $("tool-title");
+    const descEl     = $("tool-desc");
+    const bodyEl     = $("tool-body");
+
+    setTheme(state.theme);
+    themeBtn.addEventListener("click", () => {
+        state.theme = state.theme === "dark" ? "light" : "dark";
+        setTheme(state.theme);
+    });
+
+    function setTheme(t) {
+        document.documentElement.setAttribute("data-theme", t);
+        localStorage.setItem("pm-theme", t);
+        themeBtn.querySelector("i").className = t === "dark" ? "fa-solid fa-sun" : "fa-solid fa-moon";
+    }
+
+    function resetToMainDashboardView(targetAnchorId) {
+        toolsEl.classList.remove("hidden");
+        workEl.classList.add("hidden");
+        state.tool = null;
+        state.files = [];
+        
+        if(targetAnchorId) {
+            setTimeout(() => {
+                const targetNode = $(targetAnchorId);
+                if(targetNode) targetNode.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 50);
+        }
+    }
+
+    $("link-home").addEventListener("click", (e) => { e.preventDefault(); resetToMainDashboardView("home"); });
+    $("link-tools").addEventListener("click", (e) => { e.preventDefault(); resetToMainDashboardView("tools"); });
+    $("nav-logo-link").addEventListener("click", (e) => { e.preventDefault(); resetToMainDashboardView("home"); });
+
+    const TOOLS = {
+        merge:   { title: "Merge PDFs",        desc: "Add your files, drag them into order, hit process.",                  go: () => buildUpload(".pdf", true) },
+        split:   { title: "Split PDF",          desc: "Pick a mode below — extract a range or break into single pages.",    go: () => buildUpload(".pdf", false) },
+        compress:{ title: "Compress PDF",       desc: "Pick a preset or dial in your own quality level.",                   go: () => buildUpload(".pdf", false) },
+        pdf2img: { title: "PDF → Images",       desc: "Every page gets rasterized to PNG at 2x scale. Comes as a zip.",    go: () => buildUpload(".pdf", false) },
+        img2pdf: { title: "Images → PDF",       desc: "Add your images, arrange them, and compile into one PDF.",          go: () => buildUpload("image/*", true) },
+        jpg2png: { title: "JPG → PNG",          desc: "Batch convert your JPG files to standalone PNG files.",              go: () => buildUpload(".jpg,.jpeg", true) },
+        png2jpg: { title: "PNG → JPG",          desc: "Batch convert your PNG files to standalone JPG files.",              go: () => buildUpload(".png", true) }
+    };
+
+    document.querySelectorAll(".card").forEach(c => {
+        c.addEventListener("click", () => {
+            state.tool  = c.dataset.tool;
+            state.files = [];
+            const cfg = TOOLS[state.tool];
+            titleEl.textContent = cfg.title;
+            descEl.textContent  = cfg.desc;
+            cfg.go();
+            toolsEl.classList.add("hidden");
+            workEl.classList.remove("hidden");
+            workEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    });
+
+    backBtn.addEventListener("click", () => {
+        resetToMainDashboardView("tools");
+    });
+
+    function buildUpload(accept, multi) {
+        bodyEl.innerHTML = `
+            <div class="drop-zone" id="dz">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <strong>drop files here</strong>
+                <span>or <b>click to browse</b></span>
+                <input type="file" class="file-input" id="fi" ${multi ? "multiple" : ""} accept="${accept}">
+            </div>
+            <div class="pbar-wrap" id="pb"><div id="pf" class="pbar-fill"></div></div>
+            <div id="wa"></div>
+        `;
+        $("fi").addEventListener("change", e => addFiles(e.target.files));
+    }
+
+    function addFiles(list) {
+        const singles = ["split","compress","pdf2img"];
+        if (singles.includes(state.tool)) state.files = [list[0]];
+        else Array.from(list).forEach(f => state.files.push(f));
+        render();
+    }
+
+    function render() {
+        const wa = $("wa");
+        wa.innerHTML = "";
+        if (!state.files.length) return;
+
+        wa.innerHTML = `
+            <div class="file-list" id="fl"></div>
+            <div id="sb"></div>
+            <div style="margin-top:18px">
+                <button id="go-btn" class="btn-go">
+                    <i class="fa-solid fa-bolt"></i> Process & Save
+                </button>
+            </div>
+        `;
+
+        const fl = $("fl");
+        const moveable = ["merge","img2pdf"].includes(state.tool);
+
+        state.files.forEach((f, i) => {
+            const d = document.createElement("div");
+            d.className = "fitem";
+            d.innerHTML = `
+                <div class="fitem-left">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <div>
+                        <div class="fitem-name">${f.name}</div>
+                        <div class="fitem-size">${(f.size/1024).toFixed(1)} KB</div>
+                    </div>
+                </div>
+                <div class="fitem-btns">
+                    ${moveable ? `
+                        <button class="ico-btn" onclick="mv(${i},-1)" title="Move up"><i class="fa-solid fa-arrow-up"></i></button>
+                        <button class="ico-btn" onclick="mv(${i},1)" title="Move down"><i class="fa-solid fa-arrow-down"></i></button>
+                    ` : ""}
+                    <button class="ico-btn" onclick="rm(${i})" title="Remove"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `;
+            fl.appendChild(d);
+        });
+
+        buildSettings();
+        $("go-btn").addEventListener("click", run);
+    }
+
+    window.mv = (i, d) => {
+        const t = i + d;
+        if (t >= 0 && t < state.files.length) {
+            [state.files[i], state.files[t]] = [state.files[t], state.files[i]];
+            render();
+        }
+    };
+    window.rm = i => { state.files.splice(i, 1); render(); };
+
+    function buildSettings() {
+        const sb = $("sb");
+        if (state.tool === "compress") {
+            sb.innerHTML = `
+                <div class="settings-box">
+                    <div class="settings-lbl">compression quality</div>
+                    <div class="presets">
+                        <button class="preset on" id="p-low" onclick="setP('low',0.85)">Low</button>
+                        <button class="preset"    id="p-med" onclick="setP('medium',0.60)">Medium</button>
+                        <button class="preset"    id="p-hig" onclick="setP('high',0.35)">High</button>
+                    </div>
+                    <div class="slider-header">
+                        <span>quality level</span>
+                        <span class="slider-val" id="sv">85%</span>
+                    </div>
+                    <input type="range" id="cs" min="10" max="100" value="85">
+                </div>
+                <div id="sr"></div>
+            `;
+            $("cs").addEventListener("input", e => {
+                $("sv").textContent = e.target.value + "%";
+                document.querySelectorAll(".preset").forEach(p => p.classList.remove("on"));
+            });
+        } else if (state.tool === "split") {
+            sb.innerHTML = `
+                <div class="settings-box">
+                    <div class="settings-lbl">split mode</div>
+                    <div class="radio-opts">
+                        <div class="radio-opt">
+                            <input type="radio" name="sm" value="all" id="r-all" checked>
+                            <label for="r-all">Separate all pages — each page becomes its own PDF</label>
+                        </div>
+                        <div class="radio-opt">
+                            <input type="radio" name="sm" value="range" id="r-rng">
+                            <label for="r-rng">Extract a page range — choose start and end</label>
+                        </div>
+                    </div>
+                    <div id="rf" class="range-row hidden">
+                        <input type="number" id="ss" class="num-input" placeholder="Start page" value="1" min="1">
+                        <input type="number" id="se" class="num-input" placeholder="End page"   value="2" min="1">
+                    </div>
+                </div>
+            `;
+            $("r-all").addEventListener("change", () => $("rf").classList.add("hidden"));
+            $("r-rng").addEventListener("change", () => $("rf").classList.remove("hidden"));
+        }
+    }
+
+    window.setP = (lvl, v) => {
+        document.querySelectorAll(".preset").forEach(p => p.classList.remove("on"));
+        document.getElementById("p-" + lvl.slice(0,3)).classList.add("on");
+        const s = $("cs"); s.value = v * 100;
+        $("sv").textContent = s.value + "%";
+    };
+
+    function progress(p) {
+        const w = $("pb"), f = $("pf");
+        if (!w || !f) return;
+        w.style.display = "block";
+        f.style.width = p + "%";
+        if (p >= 100) setTimeout(() => w.style.display = "none", 1000);
+    }
+
+    async function run() {
+        progress(10);
+        try {
+            if (state.tool === "merge") {
+                const out = await PDFLib.PDFDocument.create();
+                for (const f of state.files) {
+                    const d = await PDFLib.PDFDocument.load(await f.arrayBuffer());
+                    const pg = await out.copyPages(d, d.getPageIndices());
+                    pg.forEach(p => out.addPage(p));
+                }
+                saveAs(new Blob([await out.save()], {type:"application/pdf"}), "merged.pdf");
+            }
+            else if (state.tool === "split") {
+                const src = await PDFLib.PDFDocument.load(await state.files[0].arrayBuffer());
+                const mode = document.querySelector('input[name="sm"]:checked').value;
+                if (mode === "range") {
+                    const s = parseInt($("ss").value) - 1;
+                    const e = parseInt($("se").value) - 1;
+                    const out = await PDFLib.PDFDocument.create();
+                    const idx = []; for (let i = s; i <= e; i++) idx.push(i);
+                    (await out.copyPages(src, idx)).forEach(p => out.addPage(p));
+                    saveAs(new Blob([await out.save()], {type:"application/pdf"}), "extracted.pdf");
+                } else {
+                    const zip = new JSZip();
+                    for (let i = 0; i < src.getPageCount(); i++) {
+                        const s = await PDFLib.PDFDocument.create();
+                        const [p] = await s.copyPages(src, [i]); s.addPage(p);
+                        zip.file(`page_${i+1}.pdf`, await s.save());
+                    }
+                    saveAs(await zip.generateAsync({type:"blob"}), "split_pages.zip");
+                }
+            }
+            else if (state.tool === "compress") {
+                const orig = state.files[0].size;
+                const q = $("cs").value / 100;
+                const bytes = await state.files[0].arrayBuffer();
+                const proxy = await pdfjsLib.getDocument({data: bytes}).promise;
+                const out = await PDFLib.PDFDocument.create();
+                for (let i = 1; i <= proxy.numPages; i++) {
+                    const pg = await pdfjsLib.getDocument({data: bytes}).promise.then(d => d.getPage(i));
+                    const vp = pg.getViewport({scale: q * 1.5});
+                    const cvs = document.createElement("canvas");
+                    cvs.width = vp.width; cvs.height = vp.height;
+                    await pg.render({canvasContext: cvs.getContext("2d"), viewport: vp}).promise;
+                    const ib = await (await fetch(cvs.toDataURL("image/jpeg", q))).arrayBuffer();
+                    const emb = await out.embedJpg(ib);
+                    out.addPage([vp.width, vp.height]).drawImage(emb, {x:0,y:0,width:vp.width,height:vp.height});
+                }
+                const res = await out.save();
+                const blob = new Blob([res], {type:"application/pdf"});
+                const saved = Math.max(0, Math.round((1 - blob.size/orig)*100));
+                $("sr").innerHTML = `
+                    <div class="stats">
+                        <div class="stat orig">
+                            <div class="stat-n">${(orig/1024).toFixed(1)} KB</div>
+                            <div class="stat-l">original</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-n">${(blob.size/1024).toFixed(1)} KB</div>
+                            <div class="stat-l">compressed</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-n">${saved}%</div>
+                            <div class="stat-l">saved</div>
+                        </div>
+                    </div>
+                `;
+                saveAs(blob, "compressed.pdf");
+            }
+            else if (state.tool === "pdf2img") {
+                const doc = await pdfjsLib.getDocument({data: await state.files[0].arrayBuffer()}).promise;
+                const zip = new JSZip();
+                const cvs = document.createElement("canvas");
+                const ctx = cvs.getContext("2d");
+                for (let i = 1; i <= doc.numPages; i++) {
+                    const pg = await doc.getPage(i);
+                    const vp = pg.getViewport({scale:2});
+                    cvs.width = vp.width; cvs.height = vp.height;
+                    await pg.render({canvasContext:ctx, viewport:vp}).promise;
+                    zip.file(`page_${i}.png`, cvs.toDataURL("image/png").split(",")[1], {base64:true});
+                }
+                saveAs(await zip.generateAsync({type:"blob"}), "pages.zip");
+            }
+            else if (state.tool === "img2pdf") {
+                const out = await PDFLib.PDFDocument.create();
+                for (const f of state.files) {
+                    const buf = await f.arrayBuffer();
+                    const emb = f.name.toLowerCase().endsWith(".png") ? await out.embedPng(buf) : await out.embedJpg(buf);
+                    const sc = emb.scale(1);
+                    out.addPage([sc.width, sc.height]).drawImage(emb, {x:0,y:0,width:sc.width,height:sc.height});
+                }
+                saveAs(new Blob([await out.save()], {type:"application/pdf"}), "compiled.pdf");
+            }
+            else if (state.tool === "jpg2png" || state.tool === "png2jpg") {
+                const fmt = state.tool === "jpg2png" ? "image/png" : "image/jpeg";
+                const ext = state.tool === "jpg2png" ? ".png" : ".jpg";
+                const mime = state.tool === "jpg2png" ? "image/png" : "image/jpeg";
+                
+                for (let idx = 0; idx < state.files.length; idx++) {
+                    const f = state.files[idx];
+                    const img = await new Promise(r => {
+                        const i = new Image(); i.onload = () => r(i);
+                        i.src = URL.createObjectURL(f);
+                    });
+                    const cvs = document.createElement("canvas");
+                    cvs.width = img.width; cvs.height = img.height;
+                    cvs.getContext("2d").drawImage(img, 0, 0);
+                    
+                    const cleanName = f.name.replace(/\.[^.]+$/, ext);
+                    
+                    cvs.toBlob((blobObj) => {
+                        saveAs(blobObj, cleanName);
+                    }, mime, 0.92);
+                    
+                    progress(10 + Math.floor(((idx + 1) / state.files.length) * 90));
+                }
+            }
+            progress(100);
+            toast("done! your file is downloading.", "ok");
+        } catch(e) {
+            console.error(e);
+            toast("something went wrong. check console.", "err");
+            progress(100);
+        }
+    }
+
+    function toast(msg, type = "ok") {
+        const el = document.createElement("div");
+        el.className = `toast ${type}`;
+        el.innerHTML = `<i class="fa-solid ${type === "err" ? "fa-circle-xmark" : "fa-circle-check"}"></i> ${msg}`;
+        $("toasts").appendChild(el);
+        setTimeout(() => { el.style.opacity = "0"; setTimeout(() => el.remove(), 300); }, 3200);
+    }
+});
+</script>
+</body>
+</html>
