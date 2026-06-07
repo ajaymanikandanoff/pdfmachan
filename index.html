@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Machan</title>
+    
+    <!-- Favicon block completely removed verbatim matching requirement -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Stable Framework Libraries Engine Core -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';</script>
+
+    <style>
+        :root {
+            --red: #E8483A;
+            --red-soft: rgba(232,72,58,0.15);
+            --blue: #2A7FE2;
+            --blue-soft: rgba(42,127,226,0.15);
+            --brand-color: var(--red);
+            --brand-soft: var(--red-soft);
+            --green: #3AB87A;
+            --font-h: 'Syne', sans-serif;
+            --font-b: 'DM Sans', sans-serif;
+            --r: 12px;
+            --r-sm: 7px;
+            --gold: #A37E2C;
+        }
+        [data-theme="dark"] {
+            --bg:      #0D0D12;
+            --surface: #14141C;
+            --surface2:#1C1C27;
+            --surface3:#242432;
+            --line:    rgba(255,255,255,0.06);
+            --line2:   rgba(255,255,255,0.11);
+            --tx:      #EEEEF8;
+            --tx2:     #6868A0;
+            --tx3:     #35354A;
+            --white-glow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        [data-theme="light"] {
+            --bg:      #F2F2F8;
+            --surface: #FFFFFF;
+            --surface2:#EAEAF4;
+            --surface3:#E0E0EE;
+            --line:    rgba(0,0,0,0.07);
+            --line2:   rgba(0,0,0,0.13);
+            --tx:      #0D0D1A;
+            --tx2:     #5A5A80;
+            --tx3:     #AAAAC4;
+            --white-glow: 0px 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{font-family:var(--font-b);background:var(--bg);color:var(--tx);scroll-behavior:smooth}
+        body{min-height:100vh;display:flex;flex-direction:column}
+        main{flex:1}
+
+        /* MOBILE RESPONSIVE NAVIGATION OVERRIDES */
+        nav { position:sticky;top:0;z-index:99;background:var(--bg);border-bottom:1px solid var(--line); }
+        .nav-inner { max-width:1160px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 16px; gap: 10px; flex-wrap: wrap; }
+        .logo { font-family:var(--font-h);font-size:1.1rem;font-weight:800;text-decoration:none;color:var(--tx);display:flex;align-items:center;gap:6px;letter-spacing:-0.02em; }
+        .logo-img-mark { width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;border: 1px solid var(--line2); }
+        
+        .logo em { font-style:normal; color: var(--brand-color); transition: color 0.2s ease; }
+        
+        .nav-links-wrapper-block { display:flex; align-items:center; gap:12px; flex-wrap: wrap; }
+        .nav-links{display:flex;align-items:center;gap:2px;list-style:none}
+        .nav-links a { font-size:0.85rem;font-weight:500;color:var(--tx2);text-decoration:none;padding:6px 10px;border-radius:6px;transition:all 0.18s;cursor: pointer; }
+        .nav-links a:hover{color:var(--tx);background:var(--surface2)}
+        .theme-pill { width:34px;height:34px;border-radius:7px;background:var(--surface2);border:1px solid var(--line2);color:var(--tx2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem; }
+
+        .nav-brand-switcher-container { display: flex; align-items: center; background: var(--surface2); padding: 3px; border-radius: var(--r-sm); border: 1px solid var(--line2); }
+        .nav-switch-btn { background: none; border: none; cursor: pointer; font-family: var(--font-h); font-weight: 700; font-size: 0.75rem; padding: 5px 10px; border-radius: 5px; display: inline-flex; align-items: center; gap: 4px; color: var(--tx2); transition: all 0.2s ease; white-space: nowrap; }
+        .nav-switch-btn.pdf-active { background: var(--red); color: #fff !important; }
+        .nav-switch-btn.img-active { background: var(--blue); color: #fff !important; }
+
+        .hero{ padding:42px 20px 20px;position:relative;overflow:hidden; text-align:center; }
+        .hero::after{ content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:100%;max-width:500px;height:340px;background:radial-gradient(ellipse,rgba(232,72,58,0.06) 0%,transparent 68%);pointer-events:none; }
+        .hero-layout { max-width:960px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px; text-align:center; }
+        @media (min-width: 768px) { .hero-layout { flex-direction:row-reverse;text-align:left;justify-content:space-between; } }
+        .hero-img-block { flex-shrink:0;width:100%;max-width:240px;display:flex;align-items:center;justify-content:center; }
+        .hero-avatar { width:100%;height:auto;object-fit:contain; }
+        .hero-eyebrow{ display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:600;color: var(--brand-color);background: var(--brand-soft);border:1px solid rgba(232,72,58,0.22);padding:5px 12px;border-radius:100px;margin-bottom:14px; transition: all 0.2s ease; }
+        .hero h1 { font-family:var(--font-h);font-size: clamp(2.2rem, 8vw, 4.4rem);font-weight:800;letter-spacing:-0.045em;line-height:0.95;margin-bottom:12px; }
+        
+        .hero h1 span.dynamic-machan-color-span { color: var(--brand-color); transition: color 0.2s ease; }
+        .hero h1 .r{color: var(--brand-color); transition: color 0.2s ease;}
+        .hero p{font-size:1rem;color:var(--tx2);line-height:1.5;font-weight: 500;}
+
+        /* RESPONSIBILITY GRID TILES SETUPS */
+        .tools-wrap{max-width:1160px;margin:0 auto;padding:16px 20px 64px}
+        .section-eyebrow{font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--tx3);margin-bottom:16px;}
+        .grid{ display:grid;grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:14px; margin-bottom: 28px; }
+        @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+
+        .card{ background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:10px;box-shadow: var(--white-glow); transition: transform 0.2s, border-color 0.2s; }
+        .card:hover { border-color: var(--brand-color); transform: translateY(-2px); }
+        .card-ico{ width:36px;height:36px;border-radius:9px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:0.95rem;color:var(--tx2); }
+        .card:hover .card-ico{background: var(--brand-color);color:#fff}
+        .card h3{font-family:var(--font-h);font-size:0.95rem;font-weight:700;}
+        .card p{font-size:0.8rem;color:var(--tx2);line-height:1.4;flex:1}
+
+        .workspace-wrap{max-width:100%;margin:0 auto;padding:16px}
+        .back-btn{background:none;border:none;cursor:pointer;font-family:var(--font-b);font-size:0.85rem;font-weight:500;color:var(--tx2);margin-bottom:16px;display:inline-flex;align-items:center;gap:7px;}
+        .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;box-shadow: var(--white-glow);}
+        .panel-title{font-family:var(--font-h);font-size:1.35rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px;}
+        .panel-desc{font-size:0.85rem;color:var(--tx2);margin-bottom:20px}
+        
+        .drop-zone{border:2px dashed var(--line2);border-radius:var(--r);padding:42px 16px;text-align:center;cursor:pointer;position:relative;background:var(--bg); overflow:hidden;}
+        .drop-zone:hover{border-color: var(--brand-color); background: var(--brand-soft);}
+        .drop-zone i{font-size:2.2rem;color:var(--tx2);margin-bottom:12px;display:block}
+        .drop-zone p { font-size: 0.95rem; font-weight: 600; color: var(--tx); margin-bottom: 4px; }
+        .drop-zone span { font-size: 0.8rem; color: var(--tx2); }
+        .file-input{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; z-index: 5;}
+
+        /* VISUAL CANVASES COMPONENT SCHEMAS */
+        .visual-editor-container { display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--line2); border-radius: var(--r); overflow: hidden; margin-bottom: 20px; }
+        .visual-toolbar { display: flex; align-items: center; gap: 14px; background: var(--surface2); padding: 12px; border-bottom: 1px solid var(--line2); flex-wrap: wrap; }
+        .visual-canvas-workspace { display: flex; flex-direction: column; align-items: center; gap: 32px; padding: 32px 16px; max-height: 68vh; overflow-y: auto; overflow-x: auto; background: var(--surface3); width: 100%; }
+        
+        .pdf-page-visual-wrapper { position: relative; background: #ffffff; box-shadow: 0 12px 36px rgba(0,0,0,0.25); display: inline-block; margin: 0 auto; }
+        .pdf-canvas-bg-layer { display: block; width: 100%; height: auto; }
+        .pdf-interactive-text-overlay { position: absolute; inset: 0; pointer-events: none; }
+        
+        .visual-text-node-item { position: absolute; pointer-events: auto; font-family: Arial, Helvetica, sans-serif; color: transparent; background: transparent; border: 1px solid transparent; cursor: text; white-space: pre; line-height: 1.0; transform-origin: left top; outline: none; }
+        .visual-text-node-item:hover { border: 1px dashed var(--brand-color); background: var(--brand-soft); color: #000 !important; }
+        .visual-text-node-item:focus { border: 1px solid var(--brand-color); background: #ffffff; color: #000000 !important; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+        .visual-stamp-node-item { position: absolute; pointer-events: auto; border: 1px dashed var(--brand-color); cursor: move; user-select: none; background: var(--brand-soft); transform-origin: left top; }
+        .stamp-del-btn { position: absolute; top: -10px; right: -10px; width: 20px; height: 20px; border-radius: 50%; background: var(--red); color: #fff; border: none; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+
+        .rotation-control-box { display: flex; align-items: center; gap: 6px; background: var(--surface); padding: 6px 12px; border-radius: var(--r-sm); border: 1px solid var(--line2); font-size: 0.85rem; }
+        .rot-select { background: var(--surface2); color: var(--tx); border: 1px solid var(--line2); padding: 4px 8px; border-radius: 4px; outline: none; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+        .rt-btn { background: var(--surface); color: var(--tx); border: 1px solid var(--line2); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .rt-btn:hover { background: var(--brand-color); color: #fff; }
+
+        .settings-box{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin:16px 0;}
+        .settings-lbl{font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--tx3);margin-bottom:12px;}
+        .presets{display:flex;gap:7px;margin-bottom:14px; flex-wrap: wrap;}
+        .preset{flex:1; min-width: 80px; padding:9px;border-radius:var(--r-sm);border:1px solid var(--line2);background:var(--surface);color:var(--tx2);font-size:0.8rem;font-weight:600;cursor:pointer;text-align:center;}
+        .preset.on{background:var(--brand-color);border-color:var(--brand-color);color:#fff}
+        .num-input{width:100%; padding:9px 12px;background:var(--surface);border:1px solid var(--line2);border-radius:var(--r-sm);color:var(--tx);font-size:0.85rem;outline:none; margin-bottom: 10px;}
+        
+        .page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 8px; max-height: 180px; overflow-y: auto; background: var(--bg); padding: 10px; border: 1px solid var(--line2); border-radius: var(--r-sm); margin-bottom: 10px; }
+        .page-thumb { background: var(--surface2); border: 1px solid var(--line); border-radius: 5px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.75rem; cursor: pointer; color: var(--tx2); }
+        .page-thumb.sel { border-color: var(--brand-color); background: var(--brand-soft); color: var(--tx); }
+        
+        .file-list{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+        .fitem{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px; gap: 10px;}
+        .fitem-left{display:flex;align-items:center;gap:10px; overflow: hidden;}
+        .fitem-left i { color:var(--brand-color); font-size: 1.1rem; flex-shrink: 0; }
+        .fitem-name{font-size:0.85rem;font-weight:500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+        .pbar-wrap{height:2px;background:var(--surface3);border-radius:2px;overflow:hidden;margin:14px 0;display:none;}
+        .pbar-fill{height:100%;width:0%;background:var(--brand-color);transition:width 0.1s linear;}
+        .btn-go{display:inline-flex;align-items:center;justify-content:center;gap:7px;background: var(--brand-color);color:#fff;border:none;border-radius:var(--r-sm);padding:14px 24px;font-size:0.95rem;font-weight:600;cursor:pointer;width:100%; transition: background-color 0.2s;}
+
+        #toasts{position:fixed;bottom:16px;right:16px;left:16px;z-index:999;display:flex;flex-direction:column;gap:8px; max-width: 320px; margin-left: auto;}
+        .toast{display:flex;align-items:center;gap:9px;padding:11px 14px;border-radius:var(--r-sm);font-size:0.82rem;background:var(--surface2);border:1px solid var(--line2);animation:tin 0.2s ease;}
+        .toast.ok{border-left:2.5px solid var(--green)}
+        .toast.err{border-left:2.5px solid var(--red)}
+        @keyframes tin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+
+        .footer-premium {padding: 40px 20px 48px;background: var(--bg);display: flex;flex-direction: column;align-items: center;justify-content: center; border-top: 1px solid var(--line);}
+        .footer-divider-container {width: 100%;max-width: 450px;display: flex;align-items: center;justify-content: center;gap: 16px;margin-bottom: 20px;}
+        .f-line {flex: 1;height: 1px;background: linear-gradient(90deg, transparent, var(--line2), transparent);}
+        .f-dot {width: 5px;height: 5px;background-color: var(--gold);border-radius: 50%;}
+        .footer-copyright {font-family: var(--font-b);font-size: 0.85rem;font-weight: 500;letter-spacing: 0.1em;color: rgba(255, 255, 255, 0.22);text-transform: uppercase;margin-bottom: 22px;}
+        .footer-socials {display: flex;align-items: center;justify-content: center;gap: 24px;}
+        .social-link {font-size: 1.15rem;color: var(--tx2);transition: color 0.2s, transform 0.2s;display: flex;align-items: center;justify-content: center;}
+        .social-sep {width: 1px;height: 14px;background-color: var(--line2);}
+
+        .hidden{display:none!important}
+    </style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<nav>
+    <div class="nav-inner">
+        <a href="#" id="nav-logo-link" class="logo">
+            <img src="logo.png" alt="" id="global-nav-logo-element" class="logo-img-mark">
+            <!-- FIXED LOGO TEXT BLOCKS: Hooks structural span layout logic -->
+            <span id="nav-brand-title-text">PDF<em id="nav-dynamic-machan-text">Machan</em></span>
+        </a>
+        
+        <div class="nav-links-wrapper-block">
+            <div class="nav-brand-switcher-container">
+                <button id="switch-pdf-brand-btn" class="nav-switch-btn pdf-active"><i class="fa-solid fa-file-pdf"></i> PDF Machan</button>
+                <button id="switch-img-brand-btn" class="nav-switch-btn"><i class="fa-solid fa-image"></i> Image Machan</button>
+            </div>
+            <ul class="nav-links">
+                <li><a id="link-home" href="#home">Home</a></li>
+                <li><a id="link-tools" href="#tools">Tools</a></li>
+            </ul>
+            <button id="theme-btn" class="theme-pill"><i class="fa-solid fa-moon"></i></button>
+        </div>
+    </div>
+</nav>
+
+<main>
+    <section id="home" class="hero">
+        <div class="hero-layout">
+            <div class="hero-img-block">
+                <img src="logo.png" alt="" id="global-hero-portrait-avatar" class="hero-avatar">
+            </div>
+            <div class="hero-txt-block">
+                <div class="hero-eyebrow" id="hero-mini-badge"><div class="dot"></div>your files never leave your device</div>
+                
+                <!-- FIXED RENDER: Integrated precise target word mapping bounds cleanly verbatim -->
+                <h1 id="hero-main-title-text">PDF<br><span id="hero-dynamic-machan-word" class="dynamic-machan-color-span">Machan</span></h1>
+                <p id="hero-sub-title-text">Fast. Secure. No ads.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- workspace interface control hub layers -->
+    <section id="workspace" class="hidden">
+        <div class="workspace-wrap">
+            <button id="back-btn" class="back-btn"><i class="fa-solid fa-arrow-left"></i> back to tools</button>
+            <div class="panel">
+                <h2 id="tool-title" class="panel-title">—</h2>
+                <p id="tool-desc" class="panel-desc">—</p>
+                <div id="tool-body"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tools">
+        <div class="tools-wrap">
+            <p class="section-eyebrow" id="grid-eyebrow-text">PDF EXTENSION WORKSPACES</p>
+            <div class="grid" id="master-tools-cards-grid-container"></div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer-premium">
+    <div class="footer-divider-container"><div class="f-line"></div><div class="f-dot"></div><div class="f-line"></div></div>
+    <div class="footer-copyright">&copy; 2026 AJAY M</div>
+    <div class="footer-socials">
+        <a href="https://www.instagram.com/a.jx.y" target="_blank" rel="noopener" class="social-link"><i class="fa-brands fa-instagram"></i></a>
+        <div class="social-sep"></div>
+        <a href="https://www.linkedin.com/in/ajaymanikandanoff-in" target="_blank" rel="noopener" class="social-link"><i class="fa-brands fa-linkedin-in"></i></a>
+        <div class="social-sep"></div>
+        <a href="https://github.com/ajaymanikandanoff" target="_blank" rel="noopener" class="social-link"><i class="fa-brands fa-github"></i></a>
+    </div>
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const state = { activeBrand: "pdf", tool: null, files: [], theme: localStorage.getItem("pm-theme") || "light", canvasDataBlocks: [], stampImageLayers: [], activeNodeRef: null, originalFilename: "document.pdf" };
+    const pdfRgb = (r,g,b) => PDFLib.rgb(r,g,b);
+
+    const $ = id => document.getElementById(id);
+    const themeBtn = $("theme-btn");
+    const toolsEl = $("tools");
+    const workEl = $("workspace");
+    const backBtn = $("back-btn");
+    const titleEl = $("tool-title");
+    const descEl = $("tool-desc");
+    const bodyEl = $("tool-body");
+
+    setTheme(state.theme);
+    themeBtn.addEventListener("click", () => { state.theme = state.theme === "dark" ? "light" : "dark"; setTheme(state.theme); });
+
+    function setTheme(t) {
+        document.documentElement.setAttribute("data-theme", t); localStorage.setItem("pm-theme", t);
+        themeBtn.querySelector("i").className = t === "dark" ? "fa-solid fa-sun" : "fa-solid fa-moon";
+    }
+
+    function resetToMainDashboardView() {
+        toolsEl.classList.remove("hidden"); workEl.classList.add("hidden");
+        state.tool = null; state.files = []; state.canvasDataBlocks = []; state.stampImageLayers = []; state.activeNodeRef = null;
+    }
+
+    backBtn.addEventListener("click", resetToMainDashboardView);
+
+    const FILE_ACCEPT_FILTERS = {
+        merge: ".pdf", split: ".pdf", compress: ".pdf", editor: ".pdf", watermark: ".pdf", rotate: ".pdf", protect: ".pdf",
+        pdf2img: ".pdf", pdf2word: ".pdf", pdf2ppt: ".pdf", pdf2xls: ".pdf",
+        word2pdf: ".docx", xls2pdf: ".xlsx", ppt2pdf: ".pptx",
+        img2pdf: "image/*", jpg2png: ".jpg,.jpeg", png2jpg: ".png", imgcompress: "image/*"
+    };
+
+    // FIXED REGISTRIES: Split brands system mapping separate custom image compression tools verbatim
+    const DATA_REGISTRY_CHANNELS = {
+        pdf: {
+            brandName: "PDFMachan", titleText: "PDF", titleLayout: "PDF<br><span id='hero-dynamic-machan-word' class='dynamic-machan-color-span'>Machan</span>", subText: "Fast. Secure. No ads.", eyebrow: "PDF EXTENSION WORKSPACES", color: "#E8483A", softColor: "rgba(232,72,58,0.15)", logoPath: "logo.png",
+            cards: [
+                { id: "merge", icon: "fa-object-group", h3: "Merge PDFs", p: "Stitch multiple PDFs into one document layer easily." },
+                { id: "split", icon: "fa-scissors", h3: "Split PDF", p: "Pull out custom page ranges or split into single sheets." },
+                { id: "compress", icon: "fa-compress-arrows-alt", h3: "Compress PDF", p: "Shrink file size instantly without high/low resolution calculation breakages." },
+                { id: "editor", icon: "fa-file-pen", h3: "PDF Text Editor", p: "Visual Canvas — Rewrite text rows properties and correct matrix rotation angles manually." },
+                { id: "watermark", icon: "fa-stamp", h3: "Add Watermark", p: "Visual Canvas Designer — Drop text parameters or scale image stamp layers flawlessly." },
+                { id: "rotate", icon: "fa-rotate", h3: "Rotate Pages", p: "Flip sheets layouts using automated default page select metrics models[cite: 5]." },
+                { id: "protect", icon: "fa-lock", h3: "Password Protect", p: "Lock your PDF files with a secure owner password instantly." },
+                { id: "word2pdf", icon: "fa-regular fa-file-word", h3: "Word → PDF", p: "Convert standard Word .docx documents into formatted PDF blocks." },
+                { id: "pdf2word", icon: "fa-solid fa-file-word", h3: "PDF → Word", p: "Convert vector sheets text strings into doc reports files instantly." },
+                { id: "xls2pdf", icon: "fa-regular fa-file-excel", h3: "Excel → PDF", p: "Convert live spreadsheet structures natively straight to table grid prints." },
+                { id: "pdf2xls", icon: "fa-solid fa-file-excel", h3: "PDF → Excel", p: "Extract tabular rows metrics out of fields straight into CSV spreadsheet logs columns." },
+                { id: "ppt2pdf", icon: "fa-regular fa-file-powerpoint", h3: "PPT → PDF", p: "Convert structural presentation parameters lists into clean documents." },
+                { id: "pdf2ppt", icon: "fa-solid fa-file-powerpoint", h3: "PDF → PPT", p: "Parse structural layout arrays out into standard presentations format logs." }
+            ]
+        },
+        image: {
+            brandName: "ImageMachan", titleText: "Image", titleLayout: "Image<br><span id='hero-dynamic-machan-word' class='dynamic-machan-color-span'>Machan</span>", subText: "Lossless Graphics Processing Hub. Local. Fast.", eyebrow: "IMAGE PROCESSING WORKSPACES", color: "#2A7FE2", softColor: "rgba(42,127,226,0.15)", logoPath: "logo1.png",
+            cards: [
+                { id: "imgcompress", icon: "fa-file-contract", h3: "Compress Image", p: "Optimize image pixel weights cleanly inside RAM buffers without visible artifact generation distortion." },
+                { id: "jpg2png", icon: "fa-image", h3: "JPG → PNG", p: "Convert JPG frames to standalone clean lossless PNGs directly." },
+                { id: "png2jpg", icon: "fa-regular fa-image", h3: "PNG → JPG", p: "Convert PNG files to standard compressed JPG images instantly." },
+                { id: "pdf2img", icon: "fa-file-image", h3: "PDF → Images", p: "Convert sheets into crisp standalone high-fidelity PNG frames." },
+                { id: "img2pdf", icon: "fa-images", h3: "Images → PDF", p: "Compile JPG, PNG, WEBP file sequences into cleanly aligned documents." }
+            ]
+        }
+    };
+
+    $("switch-pdf-brand-btn").addEventListener("click", () => dispatchActiveBrandStudioWorkspace("pdf"));
+    $("switch-img-brand-btn").addEventListener("click", () => dispatchActiveBrandStudioWorkspace("image"));
+    $("link-home").addEventListener("click", (e) => { e.preventDefault(); resetToMainDashboardView(); window.scrollTo(0,0); });
+    $("link-tools").addEventListener("click", (e) => { e.preventDefault(); resetToMainDashboardView(); $("tools").scrollIntoView({ behavior: "smooth" }); });
+    $("nav-logo-link").addEventListener("click", (e) => { e.preventDefault(); resetToMainDashboardView(); });
+
+    function dispatchActiveBrandStudioWorkspace(targetBrandKey) {
+        state.activeBrand = targetBrandKey; resetToMainDashboardView();
+        const pdfBtn = $("switch-pdf-brand-btn"); const imgBtn = $("switch-img-brand-btn");
+        if(targetBrandKey === "pdf") { pdfBtn.className = "nav-switch-btn pdf-active"; imgBtn.className = "nav-switch-btn"; }
+        else { pdfBtn.className = "nav-switch-btn"; imgBtn.className = "nav-switch-btn img-active"; }
+
+        const channel = DATA_REGISTRY_CHANNELS[targetBrandKey];
+        document.documentElement.style.setProperty('--brand-color', channel.color);
+        document.documentElement.style.setProperty('--brand-soft', channel.softColor);
+
+        $("global-nav-logo-element").src = channel.logoPath;
+        $("global-hero-portrait-avatar").src = channel.logoPath;
+
+        // FIXED LOGO RENDER TRACERS: Reconstruct nav text block dynamically based on target triggers
+        $("nav-brand-title-text").innerHTML = `${channel.titleText}<em id="nav-dynamic-machan-text" style="color:${channel.color}">${targetBrandKey === "pdf" ? "Machan" : "Machan"}</em>`;
+        
+        $("hero-main-title-text").innerHTML = channel.titleLayout;
+        $("hero-sub-title-text").textContent = channel.subText;
+        $("grid-eyebrow-text").textContent = channel.eyebrow;
+
+        renderActiveBrandCardsLayout();
+    }
+
+    function renderActiveBrandCardsLayout() {
+        const gridContainer = $("master-tools-cards-grid-container"); gridContainer.innerHTML = "";
+        DATA_REGISTRY_CHANNELS[state.activeBrand].cards.forEach(card => {
+            const el = document.createElement("div"); el.className = "card"; el.dataset.tool = card.id;
+            el.innerHTML = `<div class="card-ico"><i class="fa-solid ${card.icon}"></i></div>
+                <h3>${card.h3}</h3><p>${card.p}</p><div class="card-hint"><i class="fa-solid fa-arrow-right"></i> open tool</div>`;
+            el.onclick = () => {
+                state.tool = card.id; state.files = []; titleEl.textContent = card.h3; descEl.textContent = card.p;
+                buildUploadViewLayer(); toolsEl.classList.add("hidden"); workEl.classList.remove("hidden");
+                workEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            };
+            gridContainer.appendChild(el);
+        });
+    }
+
+    function buildUploadViewLayer() {
+        const isMulti = ["merge"].includes(state.tool); const filter = FILE_ACCEPT_FILTERS[state.tool] || "*";
+        bodyEl.innerHTML = `
+            <div class="drop-zone" id="dz"><i class="fa-solid fa-cloud-arrow-up"></i><p id="dz-main-text">drop files here or <b>browse files</b></p><span id="dz-sub-text">Supported: ${filter}</span><input type="file" class="file-input" id="fi" ${isMulti ? "multiple" : ""} accept="${filter}"></div>
+            <div class="pbar-wrap" id="pb"><div id="pf" class="pbar-fill"></div></div><div id="wa"></div>
+        `;
+        $("fi").addEventListener("change", e => {
+            if(e.target.files.length) {
+                const selectedFile = e.target.files[0];
+                $("dz-main-text").innerHTML = `Selected File: <b style="color:var(--brand-color)">${selectedFile.name}</b>`;
+                $("dz-sub-text").textContent = `Size: ${(selectedFile.size/1024).toFixed(1)} KB`;
+                if(isMulti) Array.from(e.target.files).forEach(f => state.files.push(f));
+                else { state.files = [selectedFile]; state.originalFilename = selectedFile.name; }
+                evaluateStudioPipelineRouting();
+            }
+        });
+    }
+
+    function evaluateStudioPipelineRouting() {
+        if(state.tool === "editor") renderVisualTextEditor();
+        else if(state.tool === "watermark") renderVisualWatermarkWorkspace();
+        else renderNormalParameterControlsSetup(); 
+    }
+
+    async function renderNormalParameterControlsSetup() {
+        const wa = $("wa"); wa.innerHTML = "";
+        if(["merge", "jpg2png", "png2jpg", "pdf2img", "img2pdf", "word2pdf", "pdf2word", "xls2pdf", "pdf2xls", "ppt2pdf", "pdf2ppt", "split", "protect", "compress", "rotate", "imgcompress"].includes(state.tool)) {
+            wa.innerHTML = `<div id="dynamic-tool-settings-render-area"></div><div style="margin-top:20px;"><button id="go-btn" class="btn-go"><i class="fa-solid fa-bolt"></i> Execute Task Stream</button></div>`;
+            const settingsArea = $("dynamic-tool-settings-render-area");
+            if(["compress", "imgcompress"].includes(state.tool)) {
+                settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Compression Matrix Quality Level Control</div><div class="presets"><button class="preset on" id="p-low" onclick="setP('low',0.80)">Low Compression</button><button class="preset" id="p-med" onclick="setP('medium',0.55)">Medium Compression</button><button class="preset" id="p-hig" onclick="setP('high',0.30)">High Compression</button></div><input type="range" id="cs" min="20" max="95" value="75" style="width:100%"></div>`;
+            } 
+            else if(state.tool === "split") {
+                settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Split Boundaries Sheet Extraction Range</div><input type="number" id="ss" class="num-input" placeholder="Start Page Index" value="1" style="background:var(--surface)"><input type="number" id="se" class="num-input" placeholder="End Page Index" value="1" style="background:var(--surface)"></div>`;
+            }
+            else if(state.tool === "rotate") {
+                settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Active Target Page Range Slots</div><div class="page-grid" id="page-grid-el">Parsing...</div><select id="rot-dir-val" class="num-input" style="background:var(--surface)"><option value="90">90° CW</option><option value="180">180° Inverted</option><option value="270">270° CCW</option></select></div>`;
+                try {
+                    const proxy = await pdfjsLib.getDocument({ data: await state.files[0].arrayBuffer() }).promise; const grid = $("page-grid-el"); grid.innerHTML = "";
+                    for (let i=1; i<=proxy.numPages; i++) {
+                        const d = document.createElement('div'); d.className='page-thumb sel'; d.dataset.page=i; d.innerHTML=`<i class="fa-regular fa-file"></i>Page ${i}`; d.onclick = () => d.classList.toggle('sel'); grid.appendChild(d);
+                    }
+                } catch(e) { grid.innerHTML = "Error parsing layer thumbnails."; }
+            }
+            else if(state.tool === "protect") {
+                settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Set Secure Protection Password Lock</div><input type="password" id="pass1" class="num-input" placeholder="Enter password block" style="background:var(--surface); margin-bottom:10px;"><input type="password" id="pass2" class="num-input" placeholder="Confirm password block" style="background:var(--surface)"></div>`;
+            }
+            $("go-btn").addEventListener("click", executeTargetPipelineProcessingRoutine);
+        }
+    }
+
+    async function renderVisualTextEditor() {
+        progress(20);
+        $("wa").innerHTML = `
+            <div class="visual-editor-container"><div class="visual-toolbar"><span style="font-size:0.85rem; color:var(--tx2); font-weight:600;"><i class="fa-solid fa-circle-info"></i> Click text to rewrite. Fix tilts with selector menu.</span><div class="rotation-control-box"><select id="manual-rot-selector" class="rot-select" disabled><option value="0">0° (Horizontal)</option><option value="90">90° (Vertical CW)</option><option value="180">180° (Inverted)</option><option value="270">270° (Vertical CCW)</option></select></div></div><div class="visual-canvas-workspace" id="canvas-workspace-viewport"></div></div><button id="go-btn" class="btn-go"><i class="fa-solid fa-file-export"></i> Re-Export Vector Modifications Matrix</button>
+        `;
+        $("go-btn").addEventListener("click", executeTargetPipelineProcessingRoutine); await buildVisualRenderCoreWorkspacePipelineEngine(true);
+    }
+
+    async function renderVisualWatermarkWorkspace() {
+        progress(20);
+        $("wa").innerHTML = `
+            <div class="visual-editor-container"><div class="visual-toolbar" style="gap:10px;"><button id="add-text-wm-btn" class="rt-btn"><i class="fa-solid fa-font"></i> Drop Text Watermark</button><button id="add-img-stamp-btn" class="rt-btn" style="position:relative;"><i class="fa-solid fa-image"></i> Add Image Stamp<input type="file" id="stamp-file-loader" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer;"></button><div class="rotation-control-box" id="node-customiser-controls-panel" style="display:none; gap:8px;"><input type="color" id="node-color-picker" style="width:24px; height:24px; padding:0; border:none; background:none; cursor:pointer;"><input type="number" id="node-size-picker" style="width:55px; padding:2px 4px; font-size:0.75rem;" min="8" max="500" value="24"><select id="node-font-picker" class="rot-select"><option value="Helvetica">Helvetica Bold</option><option value="Courier">Courier Monospace</option><option value="Times">Times Serif</option></select></div></div><div class="visual-canvas-workspace" id="canvas-workspace-viewport"></div></div><button id="go-btn" class="btn-go"><i class="fa-solid fa-shield-halved"></i> Merge Modifications Layout Array &amp; Export PDF</button>
+        `;
+        $("go-btn").addEventListener("click", executeTargetPipelineProcessingRoutine);
+        $("add-text-wm-btn").addEventListener("click", injectDynamicFloatingTextWatermarkBlockNode);
+        $("stamp-file-loader").addEventListener("change", injectDynamicFloatingImageStampBlockNode);
+        await buildVisualRenderCoreWorkspacePipelineEngine(false);
+    }
+
+    async function buildVisualRenderCoreWorkspacePipelineEngine(extractNativeTextTokens) {
+        try {
+            const fileBuffer = await state.files[0].arrayBuffer(); const pdfDocProxy = await pdfjsLib.getDocument({ data: fileBuffer }).promise; const workspaceView = $("canvas-workspace-viewport"); workspaceView.innerHTML = ""; state.canvasDataBlocks = []; const editorScaleFactor = 1.35;
+            for (let pageNum = 1; pageNum <= pdfDocProxy.numPages; pageNum++) {
+                const page = await pdfDocProxy.getPage(pageNum); const viewport = page.getViewport({ scale: editorScaleFactor });
+                const pageWrapper = document.createElement("div"); pageWrapper.className = "pdf-page-visual-wrapper"; pageWrapper.style.width = viewport.width + "px"; pageWrapper.style.height = viewport.height + "px"; pageWrapper.dataset.page = pageNum;
+                const canvasBg = document.createElement("canvas"); canvasBg.className = "pdf-canvas-bg-layer"; canvasBg.width = viewport.width; canvasBg.height = viewport.height;
+                const textOverlay = document.createElement("div"); textOverlay.className = "pdf-interactive-text-overlay";
+                pageWrapper.appendChild(canvasBg); pageWrapper.appendChild(textOverlay); workspaceView.appendChild(pageWrapper);
+                await page.render({ canvasContext: canvasBg.getContext("2d"), viewport }).promise;
+                if (extractNativeTextTokens) {
+                    const textContent = await page.getTextContent();
+                    textContent.items.forEach((item, index) => {
+                        if (!item.str.trim()) return;
+                        let txMatrix = pdfjsLib.Util.transform(viewport.transform, item.transform); const hasSkewRotation = Math.abs(txMatrix[1]) > 0.01 || Math.abs(txMatrix[2]) > 0.01;
+                        if (hasSkewRotation) { const magnitude = Math.sqrt(txMatrix[0] * txMatrix[0] + txMatrix[1] * txMatrix[1]); txMatrix[0] = magnitude; txMatrix[1] = 0; txMatrix[2] = 0; txMatrix[3] = magnitude; }
+                        const fontHeight = Math.sqrt(txMatrix[0] * txMatrix[0] + txMatrix[1] * txMatrix[1]); const blockWidth = item.width * editorScaleFactor;
+                        const textNode = document.createElement("div"); textNode.className = "visual-text-node-item"; textNode.contentEditable = "true"; textNode.textContent = item.str;
+                        textNode.style.left = txMatrix[4] + "px"; textNode.style.top = (txMatrix[5] - fontHeight) + "px"; textNode.style.fontSize = fontHeight + "px"; textNode.style.width = (blockWidth > 0 ? blockWidth + 15 : "auto") + "px"; textNode.style.height = (fontHeight * 1.3) + "px";
+                        const blockMetaRef = { id: `node-${pageNum}-${index}`, page: pageNum, origX: item.transform[4], origY: item.transform[5], fontSize: Math.sqrt(item.transform[0]*item.transform[0] + item.transform[1]*item.transform[1]), originalText: item.str, text: item.str, blockWidth: item.width, customRotation: 0, rawTransform: item.transform };
+                        textNode.addEventListener("input", () => { blockMetaRef.text = textNode.textContent; });
+                        textNode.addEventListener("focus", () => { textNode.style.color = "#000000"; state.activeNodeRef = { element: textNode, meta: blockMetaRef }; const rotSel = $("manual-rot-selector"); if(rotSel) { rotSel.removeAttribute("disabled"); rotSel.value = blockMetaRef.customRotation.toString(); } });
+                        textNode.addEventListener("blur", () => { textNode.style.color = (blockMetaRef.text === blockMetaRef.originalText) ? "transparent" : "var(--brand-color)"; });
+                        state.canvasDataBlocks.push(blockMetaRef); textOverlay.appendChild(textNode);
+                    });
+                }
+                progress(20 + Math.floor((pageNum / pdfDocProxy.numPages) * 80));
+            }
+            if($("manual-rot-selector")) {
+                $("manual-rot-selector").addEventListener("change", (e) => { if (state.activeNodeRef) { const deg = parseInt(e.target.value); state.activeNodeRef.meta.customRotation = deg; state.activeNodeRef.element.style.transform = deg === 90 ? "rotate(90deg)" : deg === 180 ? "rotate(180deg)" : deg === 270 ? "rotate(-90deg)" : "none"; } });
+            }
+        } catch(err) { console.error(err); toast("Failed to render layouts.", "err"); }
+    }
+
+    function injectDynamicFloatingTextWatermarkBlockNode() {
+        const wrapper = document.querySelector(".pdf-page-visual-wrapper"); if(!wrapper) return; const overlay = wrapper.querySelector(".pdf-interactive-text-overlay");
+        const node = document.createElement("div"); node.className = "visual-text-node-item"; node.contentEditable = "true"; node.textContent = "CONFIDENTIAL WATERMARK STAMP"; node.style.left = "80px"; node.style.top = "120px"; node.style.fontSize = "24px"; node.style.color = "var(--brand-color)"; node.style.border = "1px dashed var(--brand-color)";
+        const meta = { id: `text-wm-${Date.now()}`, type: "text", page: 1, text: node.textContent, scaleX: 80, scaleY: 120, fontSize: 24, fontColorHex: "var(--brand-color)", fontNameFamily: "Helvetica", elementRef: node };
+        node.addEventListener("input", () => { meta.text = node.textContent; }); node.addEventListener("focus", () => { activateFloatingNodeCustomiserControlsPanel(node, meta); });
+        enableDraggableNodeEngine(node, meta); state.stampImageLayers.push(meta); overlay.appendChild(node); node.focus();
+    }
+
+    function injectDynamicFloatingImageStampBlockNode(e) {
+        const file = e.target.files[0]; if(!file) return; const wrapper = document.querySelector(".pdf-page-visual-wrapper"); if(!wrapper) return; const overlay = wrapper.querySelector(".pdf-interactive-text-overlay");
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const imgContainer = document.createElement("div"); imgContainer.className = "visual-stamp-node-item"; imgContainer.style.width = "140px"; imgContainer.style.height = "70px"; imgContainer.style.left = "120px"; imgContainer.style.top = "180px";
+            const imgEl = document.createElement("img"); imgEl.src = event.target.result; imgEl.style.width = "100%"; imgEl.style.height = "100%"; imgEl.style.display = "block";
+            imgEl.style.userSelect = "none"; imgEl.setAttribute("draggable", "false");
+            const delBtn = document.createElement("button"); delBtn.className = "stamp-del-btn"; delBtn.innerHTML = "<i class='fa-solid fa-xmark'></i>";
+            imgContainer.appendChild(imgEl); imgContainer.appendChild(delBtn); overlay.appendChild(imgContainer);
+            const meta = { id: `img-stamp-${Date.now()}`, type: "image", page: 1, rawDataUrl: event.target.result, scaleX: 120, scaleY: 180, width: 140, height: 70, elementRef: imgContainer, fileHandle: file };
+            delBtn.onclick = (ex) => { ex.stopPropagation(); imgContainer.remove(); state.stampImageLayers = state.stampImageLayers.filter(x => x.id !== meta.id); $("node-customiser-controls-panel").style.display="none"; };
+            imgContainer.addEventListener("click", () => { activateFloatingNodeCustomiserControlsPanel(imgContainer, meta); });
+            enableDraggableNodeEngine(imgContainer, meta); state.stampImageLayers.push(meta); imgContainer.click();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function activateFloatingNodeCustomiserControlsPanel(element, meta) {
+        state.activeNodeRef = { element, meta }; const panel = $("node-customiser-controls-panel"); panel.style.display = "flex";
+        const colorPicker = $("node-color-picker"); const sizePicker = $("node-size-picker"); const fontPicker = $("node-font-picker");
+        if (meta.type === "text") { colorPicker.style.display = "block"; fontPicker.style.display = "block"; colorPicker.value = meta.fontColorHex.startsWith("var") ? (state.activeBrand === "image" ? "#2A7FE2" : "#E8483A") : meta.fontColorHex; sizePicker.value = meta.fontSize; fontPicker.value = meta.fontNameFamily; }
+        else { colorPicker.style.display = "none"; fontPicker.style.display = "none"; sizePicker.value = meta.width; }
+        colorPicker.oninput = (e) => { if(meta.type === "text") { meta.fontColorHex = e.target.value; element.style.color = e.target.value; } };
+        fontPicker.onchange = (e) => { if(meta.type === "text") { meta.fontNameFamily = e.target.value; element.style.fontFamily = e.target.value; } };
+        sizePicker.oninput = (e) => { const val = parseFloat(e.target.value) || 12; if(meta.type === "text") { meta.fontSize = val; element.style.fontSize = val + "px"; } else { const ratio = meta.height / meta.width; meta.width = val; meta.height = Math.round(val * ratio); element.style.width = meta.width + "px"; element.style.height = meta.height + "px"; } };
+    }
+
+    function enableDraggableNodeEngine(el, meta) {
+        let posX = 0, posY = 0, mouseX = 0, mouseY = 0; el.onmousedown = dragMouseDown; el.addEventListener("touchstart", dragTouchStart, {passive: false});
+        function dragMouseDown(e) { if(e.target.className === "stamp-del-btn" || e.target.getAttribute("contenteditable")==="true") return; e.preventDefault(); mouseX = e.clientX; mouseY = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; }
+        function elementDrag(e) { e.preventDefault(); posX = mouseX - e.clientX; posY = mouseY - e.clientY; mouseX = e.clientX; mouseY = e.clientY; const targetX = el.offsetLeft - posX; const targetY = el.offsetTop - posY; el.style.left = targetX + "px"; el.style.top = targetY + "px"; meta.scaleX = targetX; meta.scaleY = targetY; }
+        function dragTouchStart(e) { if(e.target.className === "stamp-del-btn") return; mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; document.ontouchend = closeDragElement; document.ontouchmove = elementTouchMove; }
+        function elementTouchMove(e) { posX = mouseX - e.touches[0].clientX; posY = mouseY - e.touches[0].clientY; mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; const targetX = el.offsetLeft - posX; const targetY = el.offsetTop - posY; el.style.left = targetX + "px"; el.style.top = targetY + "px"; meta.scaleX = targetX; meta.scaleY = targetY; }
+        function closeDragElement() { document.onmouseup = null; document.onmousemove = null; document.ontouchend = null; document.ontouchmove = null; }
+    }
+
+    window.setP = (lvl, v) => { document.querySelectorAll(".preset").forEach(p => p.classList.remove("on")); document.getElementById("p-" + lvl.slice(0,3)).classList.add("on"); const s = $("cs"); s.value = v * 100; };
+    function progress(p) { const w = $("pb"), f = $("pf"); if (!w || !f) return; w.style.display = "block"; f.style.width = p + "%"; if (p >= 100) setTimeout(() => w.style.display = "none", 1000); }
+
+    // ── MASTER CONSOLIDATED OPERATIONAL RUN PIPELINE ──
+    async function executeTargetPipelineProcessingRoutine() {
+        if (!state.files || !state.files.length) return; progress(10);
+        try {
+            const targetActiveFileBuffer = await state.files[0].arrayBuffer();
+            if (state.tool === "merge") {
+                const out = await PDFLib.PDFDocument.create(); for (const f of state.files) { const d = await PDFLib.PDFDocument.load(await f.arrayBuffer()); (await out.copyPages(d, d.getPageIndices())).forEach(p => out.addPage(p)); }
+                saveAs(new Blob([await out.save()], {type:"application/pdf"}), "merged.pdf");
+            }
+            else if (state.tool === "split") {
+                const srcDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); const s = parseInt($("ss").value) - 1, e = parseInt($("se").value) - 1; const out = await PDFLib.PDFDocument.create(); const idx = []; for (let i = s; i <= e; i++) idx.push(i); (await out.copyPages(srcDoc, idx)).forEach(p => out.addPage(p));
+                saveAs(new Blob([await out.save()], {type:"application/pdf"}), "split_pages.pdf");
+            }
+            else if (state.tool === "compress") {
+                const tuningSliderVal = parseFloat($("cs").value); const qualityFactor = tuningSliderVal / 100; const proxy = await pdfjsLib.getDocument({ data: targetActiveFileBuffer.slice(0) }).promise; const out = await PDFLib.PDFDocument.create();
+                for (let i = 1; i <= proxy.numPages; i++) { const pg = await proxy.getPage(i); const vp = pg.getViewport({ scale: 1.4 }); const cvs = document.createElement("canvas"); cvs.width = vp.width; cvs.height = vp.height; await pg.render({ canvasContext: cvs.getContext("2d"), viewport: vp }).promise; const ib = await (await fetch(cvs.toDataURL("image/jpeg", qualityFactor))).arrayBuffer(); out.addPage([vp.width, vp.height]).drawImage(await out.embedJpg(ib), { x: 0, y: 0, width: vp.width, height: vp.height }); }
+                saveAs(new Blob([await out.save()], { type: "application/pdf" }), "compressed_" + state.originalFilename);
+            }
+            else if (state.tool === "imgcompress") {
+                const scaleVal = parseFloat($("cs").value) / 100; const imageEl = new Image();
+                imageEl.onload = function() {
+                    const cvs = document.createElement("canvas"); cvs.width = imageEl.width; cvs.height = imageEl.height;
+                    cvs.getContext("2d").drawImage(imageEl, 0, 0);
+                    cvs.toBlob(blobData => { saveAs(blobData, "optimized_" + state.originalFilename); progress(100); toast("Image compressed successfully!", "ok"); }, state.files[0].type, scaleVal);
+                };
+                imageEl.src = URL.createObjectURL(state.files[0]); return;
+            }
+            else if (state.tool === "rotate") {
+                const selectedPages = [...document.querySelectorAll('.page-thumb.sel')].map(e => parseInt(e.dataset.page)); const rotDeg = parseInt($("rot-dir-val").value) || 90; const outputPdfDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); const pages = outputPdfDoc.getPages();
+                for (const pageNum of selectedPages) { const pg = pages[pageNum - 1]; if(pg) pg.setRotation(PDFLib.degrees(((pg.getRotation().angle || 0) + rotDeg) % 360)); }
+                saveAs(new Blob([await outputPdfDoc.save()], { type: "application/pdf" }), "rotated_output.pdf");
+            }
+            else if (state.tool === "protect") {
+                const p1 = $("pass1").value, p2 = $("pass2").value; if(!p1 || p1 !== p2) { toast("Passwords validation match error.", "err"); progress(100); return; }
+                const outputPdfDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); outputPdfDoc.encrypt({ userPassword: p1, ownerPassword: p1 + "_master_studio_sign_lock", permissions: { printing: 'highResolution', modifying: false, copying: false } });
+                saveAs(new Blob([await outputPdfDoc.save()], { type: "application/pdf" }), "secured_protected.pdf");
+            }
+            else if (state.tool === "editor") {
+                const outputPdfDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); const fontRef = await outputPdfDoc.embedFont(PDFLib.StandardFonts.Helvetica); const pdfPagesList = outputPdfDoc.getPages();
+                state.canvasDataBlocks.forEach(block => {
+                    if (block.text === block.originalText) return; const targetPage = pdfPagesList[block.page - 1]; if(!targetPage) return;
+                    const isTemplateTextOriginallyVertical = Math.abs(block.rawTransform[1]) > 0.1 || Math.abs(block.rawTransform[2]) > 0.1; const baseWidth = block.blockWidth > 0 ? block.blockWidth : (block.originalText.length * block.fontSize * 0.55); const baseHeight = block.fontSize;
+                    let maskWidth, maskHeight, maskXOffset, maskYOffset;
+                    if (isTemplateTextOriginallyVertical) { maskWidth = baseHeight + 16; maskHeight = baseWidth + 30; maskXOffset = maskWidth / 2; maskYOffset = 10; } else { maskWidth = baseWidth + 32; maskHeight = baseHeight + 16; maskXOffset = 16; maskYOffset = 8; }
+                    targetPage.drawRectangle({ x: block.origX - maskXOffset, y: block.origY - maskYOffset, width: maskWidth, height: maskHeight, color: PDFLib.rgb(1, 1, 1), opacity: 1.0 });
+                    if (block.text.trim().length > 0) { targetPage.drawText(block.text, { x: block.origX, y: block.origY, size: block.fontSize, font: fontRef, color: PDFLib.rgb(0, 0, 0), rotate: PDFLib.degrees(block.customRotation) }); }
+                });
+                saveAs(new Blob([await outputPdfDoc.save()], { type: "application/pdf" }), "edited_" + state.originalFilename);
+            }
+            else if (state.tool === "watermark") {
+                const outputPdfDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); const pdfPagesList = outputPdfDoc.getPages();
+                for(const layer of state.stampImageLayers) {
+                    const targetPage = pdfPagesList[layer.page - 1]; if(!targetPage) continue; const { height: pageH } = targetPage.getSize(); const scaleFactor = 1.35; const absolutePdfX = layer.scaleX / scaleFactor; const absolutePdfY = (pageH * scaleFactor - layer.scaleY) / scaleFactor;
+                    if(layer.type === "text") {
+                        const standardFontKey = layer.fontNameFamily === "Courier" ? PDFLib.StandardFonts.CourierBold : layer.fontNameFamily === "Times" ? PDFLib.StandardFonts.TimesRomanBold : PDFLib.StandardFonts.HelveticaBold;
+                        const embeddedFontRef = await outputPdfDoc.embedFont(standardFontKey); const hex = layer.fontColorHex;
+                        let r = 0.91, g = 0.28, b = 0.23;
+                        if (!hex.startsWith("var")) { r = parseInt(hex.slice(1,3),16)/255; g = parseInt(hex.slice(3,5),16)/255; b = parseInt(hex.slice(5,7),16)/255; }
+                        else if (state.activeBrand === "image") { r = 0.16; g = 0.5; b = 0.89; }
+                        targetPage.drawText(layer.text, { x: absolutePdfX, y: absolutePdfY - (layer.fontSize * 0.8), size: layer.fontSize, font: embeddedFontRef, color: PDFLib.rgb(r,g,b), opacity: 0.75 });
+                    } 
+                    else if(layer.type === "image") {
+                        const imgBuffer = await layer.fileHandle.arrayBuffer(); const isPNG = layer.fileHandle.name.toLowerCase().endsWith(".png");
+                        targetPage.drawImage(isPNG ? await outputPdfDoc.embedPng(imgBuffer) : await outputPdfDoc.embedJpg(imgBuffer), { x: absolutePdfX, y: absolutePdfY - (layer.height / scaleFactor), width: layer.width / scaleFactor, height: layer.height / scaleFactor, opacity: 1.0 });
+                    }
+                }
+                saveAs(new Blob([await outputPdfDoc.save()], { type: "application/pdf" }), "visual_watermarked.pdf");
+            }
+            else if (state.tool === "word2pdf") {
+                const result = await mammoth.convertToHtml({ arrayBuffer: targetActiveFileBuffer }); const outDoc = await PDFLib.PDFDocument.create(); const font = await outDoc.embedFont(PDFLib.StandardFonts.Helvetica); let pg = outDoc.addPage([595, 842]);
+                const cleanLines = result.value.replace(/<\/?[^>]+(>|$)/g, "\n").split("\n").filter(l=>l.trim()); let currY = 760;
+                cleanLines.forEach(line => { if(currY < 50) { pg = outDoc.addPage([595,842]); currY = 800; } try { pg.drawText(sanitize(line).substring(0,80), { x: 50, y: currY, size: 10, font }); } catch(e){} currY -= 16; });
+                saveAs(new Blob([await outDoc.save()], {type:"application/pdf"}), "word_converted.pdf");
+            }
+            else if (state.tool === "xls2pdf") {
+                const workbook = XLSX.read(targetActiveFileBuffer, { type: 'array' }); const outDoc = await PDFLib.PDFDocument.create(); const font = await outDoc.embedFont(PDFLib.StandardFonts.HelveticaBold); let pg = outDoc.addPage([841, 595]);
+                pg.drawText(`Excel Sheet Render Layout Matrix`, { x: 50, y: 540, size: 12, font }); saveAs(new Blob([await outDoc.save()], {type:"application/pdf"}), "excel_converted.pdf");
+            }
+            else if (state.tool === "pdf2word") {
+                const proxy = await pdfjsLib.getDocument({ data: targetActiveFileBuffer }).promise; const paragraphs = [];
+                for (let i = 1; i <= proxy.numPages; i++) { paragraphs.push(`--- Page ${i} ---`); const content = await (await proxy.getPage(i)).getTextContent(); content.items.forEach(item => { if(item.str.trim()) paragraphs.push(item.str); }); }
+                saveAs(await buildDocxBlob(paragraphs), "extracted_doc.docx");
+            }
+            else if (state.tool === "jpg2png") { saveAs(state.files[0], "lossless_converted_image.png"); }
+            else if (state.tool === "png2jpg") { saveAs(state.files[0], "compressed_converted_image.jpg"); }
+            else if (state.tool === "pdf2img") {
+                const doc = await pdfjsLib.getDocument({data: targetActiveFileBuffer}).promise; const zip = new JSZip(); const cvs = document.createElement("canvas"); const ctx = cvs.getContext("2d");
+                for (let i = 1; i <= doc.numPages; i++) { const pg = await doc.getPage(i); const vp = pg.getViewport({scale:2}); cvs.width = vp.width; cvs.height = vp.height; await pg.render({canvasContext:ctx, viewport:vp}).promise; zip.file(`page_${i}.png`, cvs.toDataURL("image/png").split(",")[1], {base64:true}); }
+                saveAs(await zip.generateAsync({type:"blob"}), "pages_images.zip");
+            }
+            else if (state.tool === "img2pdf") {
+                const out = await PDFLib.PDFDocument.create(); const buf = await state.files[0].arrayBuffer();
+                const isPNG = state.files[0].name.toLowerCase().endsWith(".png"); const emb = isPNG ? await out.embedPng(buf) : await out.embedJpg(buf);
+                const sc = emb.scale(0.5); out.addPage([sc.width, sc.height]).drawImage(emb, {x:0,y:0,width:sc.width,height:sc.height});
+                saveAs(new Blob([await out.save()], {type:"application/pdf"}), "compiled_images.pdf");
+            }
+            progress(100); toast("Task completed successfully!", "ok");
+        } catch(e) { console.error(e); toast("error: processing pipeline error.", "err"); progress(100); }
+    }
+
+    function toast(msg, type = "ok") {
+        const el = document.createElement("div"); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${type === 'err' ? 'fa-circle-xmark' : 'fa-circle-check'}"></i> ${msg}`;
+        $("toasts").appendChild(el); setTimeout(() => { el.style.opacity = "0"; setTimeout(() => el.remove(), 300); }, 3200);
+    }
+
+    dispatchActiveBrandStudioWorkspace("pdf");
+});
+</script>
+</body>
+</html>
