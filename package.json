@@ -1,0 +1,30 @@
+{
+  "name": "pdfmachan",
+  "version": "2.0.0",
+  "private": true,
+  "description": "PDF Machan + Image Machan - full-stack file processing suite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node tests/api.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@cantoo/pdf-lib": "^2.11.1",
+    "@napi-rs/canvas": "^0.1.65",
+    "docx": "^9.0.3",
+    "express": "^4.21.2",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.8.0",
+    "multer": "^2.0.2",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^3.11.174",
+    "pdfkit": "^0.15.1",
+    "pptxgenjs": "^3.12.0",
+    "sharp": "^0.33.5",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -10,13 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Stable Framework Libraries Engine Core -->
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- Browser-side preview libraries (all processing happens on the server) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';</script>
 
@@ -154,6 +150,32 @@
         .page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 8px; max-height: 180px; overflow-y: auto; background: var(--bg); padding: 10px; border: 1px solid var(--line2); border-radius: var(--r-sm); margin-bottom: 10px; }
         .page-thumb { background: var(--surface2); border: 1px solid var(--line); border-radius: 5px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.75rem; cursor: pointer; color: var(--tx2); }
         .page-thumb.sel { border-color: var(--brand-color); background: var(--brand-soft); color: var(--tx); }
+
+        /* PAGE THUMBNAIL DECK (merge / split / page numbers) */
+        .deck-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .deck-toolbar .deck-info { font-size: 0.78rem; color: var(--tx2); font-weight: 600; }
+        .deck-toolbar .deck-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+        .page-deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; max-height: 420px; overflow-y: auto; background: var(--bg); padding: 12px; border: 1px solid var(--line2); border-radius: var(--r-sm); }
+        .page-card { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 6px; background: var(--surface2); border: 1px solid var(--line); border-radius: 7px; cursor: grab; transition: border-color 0.15s, opacity 0.15s, transform 0.15s; }
+        .page-card:hover { border-color: var(--brand-color); }
+        .page-card.dragging { opacity: 0.45; }
+        .page-card.drop-target { border-color: var(--brand-color); box-shadow: 0 0 0 2px var(--brand-soft); }
+        .page-card.excluded { opacity: 0.32; filter: grayscale(1); }
+        .page-card .thumb-wrap { position: relative; width: 100%; background: #fff; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 96px; border: 1px solid var(--line2); }
+        .page-card .thumb-wrap canvas, .page-card .thumb-wrap img { display: block; width: 100%; height: auto; }
+        .page-card .thumb-loading { font-size: 0.68rem; color: #999; padding: 24px 4px; text-align: center; }
+        .page-card .page-badge { position: absolute; top: 10px; left: 10px; z-index: 2; background: rgba(20,20,24,0.82); color: #fff; font-size: 0.66rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; letter-spacing: 0.02em; }
+        .page-card .page-caption { font-size: 0.68rem; color: var(--tx2); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; }
+        .page-card .deck-actions { display: flex; gap: 4px; justify-content: space-between; }
+        .deck-icon-btn { border: 1px solid var(--line2); background: var(--surface); color: var(--tx2); border-radius: 4px; width: 24px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; cursor: pointer; }
+        .deck-icon-btn:hover { background: var(--brand-color); border-color: var(--brand-color); color: #fff; }
+        .deck-icon-btn.danger:hover { background: var(--red); border-color: var(--red); }
+        .page-select-toggle { position: absolute; top: 8px; right: 8px; z-index: 3; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #fff; background: rgba(20,20,24,0.55); color: #fff; font-size: 0.62rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+        .page-card:not(.excluded) .page-select-toggle { background: var(--brand-color); }
+        .deck-empty { padding: 26px 10px; text-align: center; color: var(--tx2); font-size: 0.82rem; }
+        .pagenum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        .pagenum-grid label { display: flex; flex-direction: column; gap: 5px; font-size: 0.72rem; font-weight: 600; color: var(--tx2); }
+        .pagenum-grid select, .pagenum-grid input { width: 100%; margin-bottom: 0; }
         
         .file-list{display:flex;flex-direction:column;gap:8px;margin:16px 0}
         .fitem{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px; gap: 10px;}
@@ -216,7 +238,7 @@
                 <img src="logo.png" alt="" id="global-hero-portrait-avatar" class="hero-avatar">
             </div>
             <div class="hero-txt-block">
-                <div class="hero-eyebrow" id="hero-mini-badge"><div class="dot"></div>your files never leave your device</div>
+                <div class="hero-eyebrow" id="hero-mini-badge"><div class="dot"></div>secure processing · files are never stored</div>
                 
                 <!-- FIXED RENDER: Integrated precise target word mapping bounds cleanly verbatim -->
                 <h1 id="hero-main-title-text">PDF<br><span id="hero-dynamic-machan-word" class="dynamic-machan-color-span">Machan</span></h1>
@@ -259,8 +281,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const state = { activeBrand: "pdf", tool: null, files: [], theme: localStorage.getItem("pm-theme") || "light", canvasDataBlocks: [], stampImageLayers: [], activeNodeRef: null, originalFilename: "document.pdf" };
-    const pdfRgb = (r,g,b) => PDFLib.rgb(r,g,b);
+    const state = { activeBrand: "pdf", tool: null, files: [], theme: localStorage.getItem("pm-theme") || "light", canvasDataBlocks: [], stampImageLayers: [], activeNodeRef: null, originalFilename: "document.pdf", mergeOrder: [], splitPages: [], splitPageCount: 0, thumbnailCache: new Map(), pdfProxyCache: new WeakMap(), mergeSignature: "" };
 
     const $ = id => document.getElementById(id);
     const themeBtn = $("theme-btn");
@@ -282,12 +303,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function resetToMainDashboardView() {
         toolsEl.classList.remove("hidden"); workEl.classList.add("hidden");
         state.tool = null; state.files = []; state.canvasDataBlocks = []; state.stampImageLayers = []; state.activeNodeRef = null;
+        state.mergeOrder = []; state.splitPages = []; state.splitPageCount = 0; state.thumbnailCache = new Map(); state.pdfProxyCache = new WeakMap(); state.mergeSignature = "";
     }
 
     backBtn.addEventListener("click", resetToMainDashboardView);
 
     const FILE_ACCEPT_FILTERS = {
-        merge: ".pdf", split: ".pdf", compress: ".pdf", editor: ".pdf", watermark: ".pdf", rotate: ".pdf", protect: ".pdf",
+        merge: ".pdf", split: ".pdf", compress: ".pdf", editor: ".pdf", watermark: ".pdf", pagenum: ".pdf", rotate: ".pdf", protect: ".pdf",
         pdf2img: ".pdf", pdf2word: ".pdf", pdf2ppt: ".pdf", pdf2xls: ".pdf",
         word2pdf: ".docx", xls2pdf: ".xlsx", ppt2pdf: ".pptx",
         img2pdf: "image/*", jpg2png: ".jpg,.jpeg", png2jpg: ".png", imgcompress: "image/*"
@@ -304,6 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 { id: "editor", icon: "fa-file-pen", h3: "PDF Text Editor", p: "Visual Canvas — Rewrite text rows properties and correct matrix rotation angles manually." },
                 { id: "watermark", icon: "fa-stamp", h3: "Add Watermark", p: "Visual Canvas Designer — Drop text parameters or scale image stamp layers flawlessly." },
                 { id: "rotate", icon: "fa-rotate", h3: "Rotate Pages", p: "Flip sheets layouts using automated default page select metrics models[cite: 5]." },
+                { id: "pagenum", icon: "fa-list-ol", h3: "Add Page Numbers", p: "Stamp clean page numbers on every sheet with format, position and starting number controls." },
                 { id: "protect", icon: "fa-lock", h3: "Password Protect", p: "Lock your PDF files with a secure owner password instantly." },
                 { id: "word2pdf", icon: "fa-regular fa-file-word", h3: "Word → PDF", p: "Convert standard Word .docx documents into formatted PDF blocks." },
                 { id: "pdf2word", icon: "fa-solid fa-file-word", h3: "PDF → Word", p: "Convert vector sheets text strings into doc reports files instantly." },
@@ -370,20 +393,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function buildUploadViewLayer() {
-        const isMulti = ["merge"].includes(state.tool); const filter = FILE_ACCEPT_FILTERS[state.tool] || "*";
+        const isMulti = ["merge", "img2pdf"].includes(state.tool); const filter = FILE_ACCEPT_FILTERS[state.tool] || "*";
         bodyEl.innerHTML = `
-            <div class="drop-zone" id="dz"><i class="fa-solid fa-cloud-arrow-up"></i><p id="dz-main-text">drop files here or <b>browse files</b></p><span id="dz-sub-text">Supported: ${filter}</span><input type="file" class="file-input" id="fi" ${isMulti ? "multiple" : ""} accept="${filter}"></div>
+            <div class="drop-zone" id="dz"><i class="fa-solid fa-cloud-arrow-up"></i><p id="dz-main-text">drop ${isMulti ? "files" : "a file"} here or <b>browse files</b></p><span id="dz-sub-text">Supported: ${filter}</span><input type="file" class="file-input" id="fi" ${isMulti ? "multiple" : ""} accept="${filter}"></div>
             <div class="pbar-wrap" id="pb"><div id="pf" class="pbar-fill"></div></div><div id="wa"></div>
         `;
         $("fi").addEventListener("change", e => {
-            if(e.target.files.length) {
-                const selectedFile = e.target.files[0];
+            if(!e.target.files.length) return;
+            const selectedFiles = Array.from(e.target.files);
+            if(isMulti) {
+                state.files = selectedFiles;
+                state.originalFilename = selectedFiles[0].name;
+                const totalKb = selectedFiles.reduce((sum, file) => sum + file.size, 0) / 1024;
+                $("dz-main-text").innerHTML = `Selected <b style="color:var(--brand-color)">${selectedFiles.length} file(s)</b>`;
+                $("dz-sub-text").textContent = `Total size: ${totalKb.toFixed(1)} KB`;
+            } else {
+                const selectedFile = selectedFiles[0];
+                state.files = [selectedFile];
+                state.originalFilename = selectedFile.name;
                 $("dz-main-text").innerHTML = `Selected File: <b style="color:var(--brand-color)">${selectedFile.name}</b>`;
                 $("dz-sub-text").textContent = `Size: ${(selectedFile.size/1024).toFixed(1)} KB`;
-                if(isMulti) Array.from(e.target.files).forEach(f => state.files.push(f));
-                else { state.files = [selectedFile]; state.originalFilename = selectedFile.name; }
-                evaluateStudioPipelineRouting();
             }
+            state.thumbnailCache = new Map();
+            state.pdfProxyCache = new WeakMap();
+            state.mergeOrder = [];
+            state.splitPages = [];
+            state.splitPageCount = 0;
+            evaluateStudioPipelineRouting();
         });
     }
 
@@ -395,28 +431,375 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function renderNormalParameterControlsSetup() {
         const wa = $("wa"); wa.innerHTML = "";
-        if(["merge", "jpg2png", "png2jpg", "pdf2img", "img2pdf", "word2pdf", "pdf2word", "xls2pdf", "pdf2xls", "ppt2pdf", "pdf2ppt", "split", "protect", "compress", "rotate", "imgcompress"].includes(state.tool)) {
-            wa.innerHTML = `<div id="dynamic-tool-settings-render-area"></div><div style="margin-top:20px;"><button id="go-btn" class="btn-go"><i class="fa-solid fa-bolt"></i> Execute Task Stream</button></div>`;
-            const settingsArea = $("dynamic-tool-settings-render-area");
-            if(["compress", "imgcompress"].includes(state.tool)) {
-                settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Compression Matrix Quality Level Control</div><div class="presets"><button class="preset on" id="p-low" onclick="setP('low',0.80)">Low Compression</button><button class="preset" id="p-med" onclick="setP('medium',0.55)">Medium Compression</button><button class="preset" id="p-hig" onclick="setP('high',0.30)">High Compression</button></div><input type="range" id="cs" min="20" max="95" value="75" style="width:100%"></div>`;
-            } 
-            else if(state.tool === "split") {
-                settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Split Boundaries Sheet Extraction Range</div><input type="number" id="ss" class="num-input" placeholder="Start Page Index" value="1" style="background:var(--surface)"><input type="number" id="se" class="num-input" placeholder="End Page Index" value="1" style="background:var(--surface)"></div>`;
+        const supportedTools = ["merge", "jpg2png", "png2jpg", "pdf2img", "img2pdf", "word2pdf", "pdf2word", "xls2pdf", "pdf2xls", "ppt2pdf", "pdf2ppt", "split", "protect", "compress", "rotate", "pagenum", "imgcompress"];
+        if (!supportedTools.includes(state.tool)) return;
+
+        wa.innerHTML = `<div id="dynamic-tool-settings-render-area"></div><div style="margin-top:20px;"><button id="go-btn" class="btn-go"><i class="fa-solid fa-bolt"></i> Execute Task Stream</button></div>`;
+        const settingsArea = $("dynamic-tool-settings-render-area");
+
+        if (state.tool === "merge") {
+            settingsArea.innerHTML = `
+                <div class="settings-box">
+                    <div class="settings-lbl">Merge order — drag pages or use ↑ ↓, remove a page with ×</div>
+                    <div class="deck-toolbar"><span class="deck-info" id="merge-deck-info">Loading pages…</span><div class="deck-buttons"><button type="button" class="rt-btn" id="merge-reset"><i class="fa-solid fa-rotate-left"></i> Reset order</button></div></div>
+                    <div class="page-deck" id="merge-page-deck"><div class="deck-empty">Loading page thumbnails…</div></div>
+                </div>`;
+            $("merge-reset").addEventListener("click", async () => { await initializeMergeOrder(); renderMergeDeck(); });
+            await initializeMergeOrder();
+            renderMergeDeck();
+        }
+        else if (state.tool === "split") {
+            settingsArea.innerHTML = `
+                <div class="settings-box">
+                    <div class="settings-lbl">Split output mode</div>
+                    <select id="split-mode" class="num-input" style="background:var(--surface)">
+                        <option value="select">Extract selected pages into one PDF</option>
+                        <option value="each">Split selected pages into separate PDFs (ZIP)</option>
+                        <option value="range">Extract a custom page range</option>
+                    </select>
+                    <div id="split-range-fields" style="display:none;">
+                        <input type="number" id="ss" class="num-input" placeholder="Start page" value="1" min="1" style="background:var(--surface)">
+                        <input type="number" id="se" class="num-input" placeholder="End page" value="1" min="1" style="background:var(--surface)">
+                    </div>
+                    <div id="split-deck-wrap">
+                        <div class="deck-toolbar"><span class="deck-info" id="split-deck-info">Loading pages…</span><div class="deck-buttons"><button type="button" class="rt-btn" id="split-all">Select all</button><button type="button" class="rt-btn" id="split-none">Remove all</button></div></div>
+                        <div class="page-deck" id="split-page-deck"><div class="deck-empty">Loading page thumbnails…</div></div>
+                    </div>
+                </div>`;
+            $("split-mode").addEventListener("change", syncSplitModeUi);
+            $("split-all").addEventListener("click", () => { state.splitPages = Array.from({ length: state.splitPageCount || 0 }, (_, index) => index + 1); renderSplitDeck(); });
+            $("split-none").addEventListener("click", () => { state.splitPages = []; renderSplitDeck(); });
+            await initializeSplitPages();
+            syncSplitModeUi();
+            renderSplitDeck();
+        }
+        else if (state.tool === "pagenum") {
+            settingsArea.innerHTML = `
+                <div class="settings-box">
+                    <div class="settings-lbl">Page number stamp settings</div>
+                    <div class="pagenum-grid">
+                        <label>Position
+                            <select id="pn-position" class="num-input">
+                                <option value="bottom-center" selected>Bottom center</option>
+                                <option value="bottom-right">Bottom right</option>
+                                <option value="bottom-left">Bottom left</option>
+                                <option value="top-center">Top center</option>
+                                <option value="top-right">Top right</option>
+                                <option value="top-left">Top left</option>
+                            </select>
+                        </label>
+                        <label>Format
+                            <select id="pn-format" class="num-input">
+                                <option value="number" selected>1, 2, 3…</option>
+                                <option value="number-of-total">1 / 10</option>
+                                <option value="page-number">Page 1</option>
+                                <option value="page-number-of-total">Page 1 of 10</option>
+                            </select>
+                        </label>
+                        <label>Start at
+                            <input type="number" id="pn-start" class="num-input" value="1" min="0">
+                        </label>
+                        <label>Font size
+                            <input type="number" id="pn-size" class="num-input" value="12" min="6" max="72">
+                        </label>
+                        <label>Colour
+                            <input type="color" id="pn-color" class="num-input" value="#1f2937" style="padding:3px;height:38px;">
+                        </label>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--tx2);font-weight:600;margin-top:2px;"><input type="checkbox" id="pn-bold"> Bold numbers</label>
+                    <p style="font-size:0.75rem;color:var(--tx3);margin-top:10px;">Numbers are drawn on top of your PDF without changing its content.</p>
+                </div>`;
+        }
+        else if (["compress", "imgcompress"].includes(state.tool)) {
+            settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Compression quality</div><div class="presets"><button class="preset on" id="p-low" onclick="setP('low',0.80)">Low Compression</button><button class="preset" id="p-med" onclick="setP('medium',0.55)">Medium Compression</button><button class="preset" id="p-hig" onclick="setP('high',0.30)">High Compression</button></div><input type="range" id="cs" min="20" max="95" value="75" style="width:100%"><p style="font-size:0.75rem;color:var(--tx3);margin-top:8px;">Images are optimised while text stays sharp. The smallest safe result is always returned.</p></div>`;
+        }
+        else if (state.tool === "rotate") {
+            settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Pages to rotate</div><div style="display:flex;gap:8px;margin-bottom:8px;"><button type="button" class="rt-btn" id="rot-all">Select all</button><button type="button" class="rt-btn" id="rot-none">Select none</button></div><div class="page-grid" id="page-grid-el">Parsing...</div><select id="rot-dir-val" class="num-input" style="background:var(--surface)"><option value="90">90° CW</option><option value="180">180° Inverted</option><option value="270">270° CCW</option></select></div>`;
+            try {
+                const proxy = await getFilePdfProxy(state.files[0]);
+                const grid = $("page-grid-el"); grid.innerHTML = "";
+                for (let i = 1; i <= proxy.numPages; i++) {
+                    const d = document.createElement("div");
+                    d.className = "page-thumb sel";
+                    d.dataset.page = i;
+                    d.innerHTML = `<i class="fa-regular fa-file"></i>Page ${i}`;
+                    d.onclick = () => d.classList.toggle("sel");
+                    grid.appendChild(d);
+                }
+                $("rot-all").onclick = () => grid.querySelectorAll(".page-thumb").forEach((el) => el.classList.add("sel"));
+                $("rot-none").onclick = () => grid.querySelectorAll(".page-thumb").forEach((el) => el.classList.remove("sel"));
+            } catch (error) {
+                $("page-grid-el").innerHTML = "Error parsing page thumbnails.";
             }
-            else if(state.tool === "rotate") {
-                settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Active Target Page Range Slots</div><div class="page-grid" id="page-grid-el">Parsing...</div><select id="rot-dir-val" class="num-input" style="background:var(--surface)"><option value="90">90° CW</option><option value="180">180° Inverted</option><option value="270">270° CCW</option></select></div>`;
+        }
+        else if (state.tool === "protect") {
+            settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Set a secure password</div><input type="password" id="pass1" class="num-input" placeholder="Enter password" style="background:var(--surface); margin-bottom:10px;"><input type="password" id="pass2" class="num-input" placeholder="Confirm password" style="background:var(--surface)"></div>`;
+        }
+
+        $("go-btn").addEventListener("click", executeTargetPipelineProcessingRoutine);
+    }
+
+    /* ── page thumbnail deck helpers ── */
+    function escapeHtml(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function formatBytes(bytes) {
+        if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+        if (bytes < 1024) return `${Math.round(bytes)} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    async function getFilePdfProxy(file) {
+        if (!state.pdfProxyCache) state.pdfProxyCache = new WeakMap();
+        if (!state.pdfProxyCache.has(file)) {
+            state.pdfProxyCache.set(file, pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise);
+        }
+        try {
+            return await state.pdfProxyCache.get(file);
+        } catch (error) {
+            state.pdfProxyCache.delete(file);
+            throw error;
+        }
+    }
+
+    function getPageDataUrl(file, pageNumber, key) {
+        const existing = state.thumbnailCache.get(key);
+        if (existing) return Promise.resolve(existing);
+        const promise = (async () => {
+            const proxy = await getFilePdfProxy(file);
+            const page = await proxy.getPage(pageNumber);
+            const base = page.getViewport({ scale: 1 });
+            const scale = Math.min(1, 150 / Math.max(1, base.width));
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.ceil(viewport.width));
+            canvas.height = Math.max(1, Math.ceil(viewport.height));
+            const context = canvas.getContext("2d");
+            context.fillStyle = "#ffffff";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            await Promise.race([
+                page.render({ canvasContext: context, viewport, background: "rgb(255,255,255)" }).promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error("thumbnail render timed out")), 20000)),
+            ]);
+            return canvas.toDataURL("image/jpeg", 0.7);
+        })();
+        state.thumbnailCache.set(key, promise);
+        return promise.then((url) => {
+            state.thumbnailCache.set(key, url);
+            return url;
+        }).catch((error) => {
+            state.thumbnailCache.delete(key);
+            throw error;
+        });
+    }
+
+    function hydrateDeckThumbnails(deck, items) {
+        let cursor = 0;
+        const renderNext = async () => {
+            while (cursor < items.length) {
+                const item = items[cursor];
+                cursor += 1;
+                const card = deck.querySelector(`.page-card[data-index="${item.index}"]`);
+                if (!card) continue;
+                const wrap = card.querySelector(".thumb-wrap");
+                if (!wrap) continue;
                 try {
-                    const proxy = await pdfjsLib.getDocument({ data: await state.files[0].arrayBuffer() }).promise; const grid = $("page-grid-el"); grid.innerHTML = "";
-                    for (let i=1; i<=proxy.numPages; i++) {
-                        const d = document.createElement('div'); d.className='page-thumb sel'; d.dataset.page=i; d.innerHTML=`<i class="fa-regular fa-file"></i>Page ${i}`; d.onclick = () => d.classList.toggle('sel'); grid.appendChild(d);
-                    }
-                } catch(e) { grid.innerHTML = "Error parsing layer thumbnails."; }
+                    const url = await getPageDataUrl(item.file, item.pageNumber, item.key);
+                    if (wrap.isConnected) wrap.innerHTML = `<img src="${url}" alt="Page ${item.pageNumber}">`;
+                } catch (error) {
+                    if (wrap.isConnected) wrap.innerHTML = `<div class="thumb-loading">Preview unavailable</div>`;
+                }
             }
-            else if(state.tool === "protect") {
-                settingsArea.innerHTML = `<div class="settings-box"><div class="settings-lbl">Set Secure Protection Password Lock</div><input type="password" id="pass1" class="num-input" placeholder="Enter password block" style="background:var(--surface); margin-bottom:10px;"><input type="password" id="pass2" class="num-input" placeholder="Confirm password block" style="background:var(--surface)"></div>`;
+        };
+        for (let worker = 0; worker < Math.min(3, items.length); worker += 1) renderNext();
+    }
+
+    async function initializeMergeOrder() {
+        state.mergeOrder = [];
+        try {
+            for (let fileIndex = 0; fileIndex < state.files.length; fileIndex += 1) {
+                const proxy = await getFilePdfProxy(state.files[fileIndex]);
+                for (let pageIndex = 0; pageIndex < proxy.numPages; pageIndex += 1) {
+                    state.mergeOrder.push({ fileIndex, pageIndex });
+                }
             }
-            $("go-btn").addEventListener("click", executeTargetPipelineProcessingRoutine);
+        } catch (error) {
+            toast("Could not read the selected PDF pages.", "err");
+        }
+    }
+
+    function renderMergeDeck() {
+        const deck = $("merge-page-deck");
+        if (!deck) return;
+        const info = $("merge-deck-info");
+        if (!state.mergeOrder.length) {
+            deck.innerHTML = `<div class="deck-empty">No pages left. Click “Reset order” to bring every page back.</div>`;
+            if (info) info.textContent = "0 pages in the merged PDF";
+            return;
+        }
+
+        deck.innerHTML = state.mergeOrder.map((entry, index) => {
+            const file = state.files[entry.fileIndex];
+            const fileName = file ? file.name : "PDF";
+            return `<div class="page-card" draggable="true" data-index="${index}">
+                <div class="page-badge">${index + 1}</div>
+                <div class="thumb-wrap"><div class="thumb-loading">Page ${entry.pageIndex + 1}</div></div>
+                <div class="page-caption" title="${escapeHtml(fileName)}">${escapeHtml(fileName)} · p${entry.pageIndex + 1}</div>
+                <div class="deck-actions">
+                    <button type="button" class="deck-icon-btn" data-act="up" title="Move earlier">↑</button>
+                    <button type="button" class="deck-icon-btn" data-act="down" title="Move later">↓</button>
+                    <button type="button" class="deck-icon-btn danger" data-act="remove" title="Remove page">×</button>
+                </div>
+            </div>`;
+        }).join("");
+
+        if (info) info.textContent = `${state.mergeOrder.length} pages · ${state.files.length} file(s)`;
+        bindMergeDeck(deck);
+        hydrateDeckThumbnails(deck, state.mergeOrder.map((entry, index) => ({
+            index,
+            file: state.files[entry.fileIndex],
+            pageNumber: entry.pageIndex + 1,
+            key: `merge:${entry.fileIndex}:${entry.pageIndex}`,
+        })));
+    }
+
+    function bindMergeDeck(deck) {
+        let dragIndex = null;
+
+        deck.onclick = (event) => {
+            const button = event.target.closest("button[data-act]");
+            if (!button) return;
+            const card = button.closest(".page-card");
+            if (!card) return;
+            const index = Number(card.dataset.index);
+            const action = button.dataset.act;
+            if (action === "remove") state.mergeOrder.splice(index, 1);
+            else if (action === "up" && index > 0) {
+                [state.mergeOrder[index - 1], state.mergeOrder[index]] = [state.mergeOrder[index], state.mergeOrder[index - 1]];
+            } else if (action === "down" && index < state.mergeOrder.length - 1) {
+                [state.mergeOrder[index + 1], state.mergeOrder[index]] = [state.mergeOrder[index], state.mergeOrder[index + 1]];
+            } else {
+                return;
+            }
+            renderMergeDeck();
+        };
+
+        deck.ondragstart = (event) => {
+            const card = event.target.closest(".page-card");
+            if (!card) return;
+            dragIndex = Number(card.dataset.index);
+            card.classList.add("dragging");
+            event.dataTransfer.effectAllowed = "move";
+            try { event.dataTransfer.setData("text/plain", String(dragIndex)); } catch (error) {}
+        };
+        deck.ondragend = () => {
+            dragIndex = null;
+            deck.querySelectorAll(".page-card").forEach((card) => card.classList.remove("dragging", "drop-target"));
+        };
+        deck.ondragover = (event) => {
+            event.preventDefault();
+            const card = event.target.closest(".page-card");
+            deck.querySelectorAll(".page-card.drop-target").forEach((other) => { if (other !== card) other.classList.remove("drop-target"); });
+            if (card) card.classList.add("drop-target");
+        };
+        deck.ondragleave = (event) => {
+            const card = event.target.closest(".page-card");
+            if (card) card.classList.remove("drop-target");
+        };
+        deck.ondrop = (event) => {
+            event.preventDefault();
+            const card = event.target.closest(".page-card");
+            if (!card || dragIndex === null) return;
+            const targetIndex = Number(card.dataset.index);
+            if (Number.isNaN(targetIndex) || targetIndex === dragIndex) return;
+            const [moved] = state.mergeOrder.splice(dragIndex, 1);
+            state.mergeOrder.splice(targetIndex, 0, moved);
+            dragIndex = null;
+            renderMergeDeck();
+        };
+    }
+
+    async function initializeSplitPages() {
+        state.splitPages = [];
+        state.splitPageCount = 0;
+        try {
+            const proxy = await getFilePdfProxy(state.files[0]);
+            state.splitPageCount = proxy.numPages;
+            state.splitPages = Array.from({ length: proxy.numPages }, (_, index) => index + 1);
+        } catch (error) {
+            toast("Could not read the selected PDF pages.", "err");
+        }
+    }
+
+    function renderSplitDeck() {
+        const deck = $("split-page-deck");
+        if (!deck) return;
+        const info = $("split-deck-info");
+        if (!state.splitPageCount) {
+            deck.innerHTML = `<div class="deck-empty">Could not read this PDF.</div>`;
+            if (info) info.textContent = "0 pages";
+            return;
+        }
+
+        const selected = new Set(state.splitPages);
+        deck.innerHTML = Array.from({ length: state.splitPageCount }, (_, index) => {
+            const page = index + 1;
+            const active = selected.has(page);
+            return `<div class="page-card ${active ? "" : "excluded"}" data-index="${index}" data-page="${page}">
+                <div class="page-badge">Page ${page}</div>
+                <button type="button" class="page-select-toggle" data-act="toggle" title="${active ? "Remove this page" : "Add this page back"}">${active ? "✓" : "+"}</button>
+                <div class="thumb-wrap"><div class="thumb-loading">Page ${page}</div></div>
+                <div class="deck-actions">
+                    <span style="font-size:0.65rem;color:var(--tx2);align-self:center;">${active ? "Selected" : "Removed"}</span>
+                    <button type="button" class="deck-icon-btn danger" data-act="remove" title="Remove page">×</button>
+                </div>
+            </div>`;
+        }).join("");
+
+        if (info) info.textContent = `${state.splitPages.length} of ${state.splitPageCount} pages selected`;
+        bindSplitDeck(deck);
+        hydrateDeckThumbnails(deck, Array.from({ length: state.splitPageCount }, (_, index) => ({
+            index,
+            file: state.files[0],
+            pageNumber: index + 1,
+            key: `split:${state.files[0].name}:${state.files[0].size}:${index + 1}`,
+        })));
+    }
+
+    function bindSplitDeck(deck) {
+        deck.onclick = (event) => {
+            const card = event.target.closest(".page-card");
+            if (!card) return;
+            const page = Number(card.dataset.page);
+            if (event.target.closest("[data-act='remove']")) {
+                state.splitPages = state.splitPages.filter((value) => value !== page);
+                renderSplitDeck();
+                return;
+            }
+            if (state.splitPages.includes(page)) state.splitPages = state.splitPages.filter((value) => value !== page);
+            else state.splitPages = [...state.splitPages, page].sort((left, right) => left - right);
+            renderSplitDeck();
+        };
+    }
+
+    function syncSplitModeUi() {
+        const mode = $("split-mode") ? $("split-mode").value : "select";
+        const range = $("split-range-fields");
+        const deckWrap = $("split-deck-wrap");
+        if (range) range.style.display = mode === "range" ? "block" : "none";
+        if (deckWrap) deckWrap.style.display = mode === "range" ? "none" : "block";
+        if (mode === "range") {
+            const start = $("ss");
+            const end = $("se");
+            if (start && !start.value) start.value = "1";
+            if (end && state.splitPageCount && Number(end.value) < 2) end.value = String(state.splitPageCount);
         }
     }
 
@@ -431,7 +814,7 @@ document.addEventListener("DOMContentLoaded", () => {
     async function renderVisualWatermarkWorkspace() {
         progress(20);
         $("wa").innerHTML = `
-            <div class="visual-editor-container"><div class="visual-toolbar" style="gap:10px;"><button id="add-text-wm-btn" class="rt-btn"><i class="fa-solid fa-font"></i> Drop Text Watermark</button><button id="add-img-stamp-btn" class="rt-btn" style="position:relative;"><i class="fa-solid fa-image"></i> Add Image Stamp<input type="file" id="stamp-file-loader" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer;"></button><div class="rotation-control-box" id="node-customiser-controls-panel" style="display:none; gap:8px;"><input type="color" id="node-color-picker" style="width:24px; height:24px; padding:0; border:none; background:none; cursor:pointer;"><input type="number" id="node-size-picker" style="width:55px; padding:2px 4px; font-size:0.75rem;" min="8" max="500" value="24"><select id="node-font-picker" class="rot-select"><option value="Helvetica">Helvetica Bold</option><option value="Courier">Courier Monospace</option><option value="Times">Times Serif</option></select></div></div><div class="visual-canvas-workspace" id="canvas-workspace-viewport"></div></div><button id="go-btn" class="btn-go"><i class="fa-solid fa-shield-halved"></i> Merge Modifications Layout Array &amp; Export PDF</button>
+            <div class="visual-editor-container"><div class="visual-toolbar" style="gap:10px;"><button id="add-text-wm-btn" class="rt-btn"><i class="fa-solid fa-font"></i> Drop Text Watermark</button><button id="add-img-stamp-btn" class="rt-btn" style="position:relative;"><i class="fa-solid fa-image"></i> Add Image Stamp<input type="file" id="stamp-file-loader" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer;"></button><div class="rotation-control-box" id="node-customiser-controls-panel" style="display:none; gap:8px;"><label style="font-size:0.72rem; color:var(--tx2); display:flex; align-items:center; gap:4px;">Page<input type="number" id="node-page-picker" class="rot-select" min="1" value="1" style="width:52px;"></label><input type="color" id="node-color-picker" style="width:24px; height:24px; padding:0; border:none; background:none; cursor:pointer;"><input type="number" id="node-size-picker" style="width:55px; padding:2px 4px; font-size:0.75rem;" min="8" max="500" value="24"><select id="node-font-picker" class="rot-select"><option value="Helvetica">Helvetica Bold</option><option value="Courier">Courier Monospace</option><option value="Times">Times Serif</option></select></div></div><div class="visual-canvas-workspace" id="canvas-workspace-viewport"></div></div><button id="go-btn" class="btn-go"><i class="fa-solid fa-shield-halved"></i> Merge Modifications Layout Array &amp; Export PDF</button>
         `;
         $("go-btn").addEventListener("click", executeTargetPipelineProcessingRoutine);
         $("add-text-wm-btn").addEventListener("click", injectDynamicFloatingTextWatermarkBlockNode);
@@ -478,7 +861,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const node = document.createElement("div"); node.className = "visual-text-node-item"; node.contentEditable = "true"; node.textContent = "CONFIDENTIAL WATERMARK STAMP"; node.style.left = "80px"; node.style.top = "120px"; node.style.fontSize = "24px"; node.style.color = "var(--brand-color)"; node.style.border = "1px dashed var(--brand-color)";
         const meta = { id: `text-wm-${Date.now()}`, type: "text", page: 1, text: node.textContent, scaleX: 80, scaleY: 120, fontSize: 24, fontColorHex: "var(--brand-color)", fontNameFamily: "Helvetica", elementRef: node };
         node.addEventListener("input", () => { meta.text = node.textContent; }); node.addEventListener("focus", () => { activateFloatingNodeCustomiserControlsPanel(node, meta); });
-        enableDraggableNodeEngine(node, meta); state.stampImageLayers.push(meta); overlay.appendChild(node); node.focus();
+        enableDraggableNodeEngine(node, meta); state.stampImageLayers.push(meta); overlay.appendChild(node); activateFloatingNodeCustomiserControlsPanel(node, meta); node.focus();
     }
 
     function injectDynamicFloatingImageStampBlockNode(e) {
@@ -500,7 +883,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function activateFloatingNodeCustomiserControlsPanel(element, meta) {
         state.activeNodeRef = { element, meta }; const panel = $("node-customiser-controls-panel"); panel.style.display = "flex";
-        const colorPicker = $("node-color-picker"); const sizePicker = $("node-size-picker"); const fontPicker = $("node-font-picker");
+        const colorPicker = $("node-color-picker"); const sizePicker = $("node-size-picker"); const fontPicker = $("node-font-picker"); const pagePicker = $("node-page-picker");
+        pagePicker.value = meta.page || 1;
+        pagePicker.oninput = (e) => { const page = parseInt(e.target.value, 10); if (Number.isFinite(page) && page > 0) meta.page = page; };
         if (meta.type === "text") { colorPicker.style.display = "block"; fontPicker.style.display = "block"; colorPicker.value = meta.fontColorHex.startsWith("var") ? (state.activeBrand === "image" ? "#2A7FE2" : "#E8483A") : meta.fontColorHex; sizePicker.value = meta.fontSize; fontPicker.value = meta.fontNameFamily; }
         else { colorPicker.style.display = "none"; fontPicker.style.display = "none"; sizePicker.value = meta.width; }
         colorPicker.oninput = (e) => { if(meta.type === "text") { meta.fontColorHex = e.target.value; element.style.color = e.target.value; } };
@@ -520,104 +905,170 @@ document.addEventListener("DOMContentLoaded", () => {
     window.setP = (lvl, v) => { document.querySelectorAll(".preset").forEach(p => p.classList.remove("on")); document.getElementById("p-" + lvl.slice(0,3)).classList.add("on"); const s = $("cs"); s.value = v * 100; };
     function progress(p) { const w = $("pb"), f = $("pf"); if (!w || !f) return; w.style.display = "block"; f.style.width = p + "%"; if (p >= 100) setTimeout(() => w.style.display = "none", 1000); }
 
-    // ── MASTER CONSOLIDATED OPERATIONAL RUN PIPELINE ──
-    async function executeTargetPipelineProcessingRoutine() {
-        if (!state.files || !state.files.length) return; progress(10);
-        try {
-            const targetActiveFileBuffer = await state.files[0].arrayBuffer();
-            if (state.tool === "merge") {
-                const out = await PDFLib.PDFDocument.create(); for (const f of state.files) { const d = await PDFLib.PDFDocument.load(await f.arrayBuffer()); (await out.copyPages(d, d.getPageIndices())).forEach(p => out.addPage(p)); }
-                saveAs(new Blob([await out.save()], {type:"application/pdf"}), "merged.pdf");
-            }
-            else if (state.tool === "split") {
-                const srcDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); const s = parseInt($("ss").value) - 1, e = parseInt($("se").value) - 1; const out = await PDFLib.PDFDocument.create(); const idx = []; for (let i = s; i <= e; i++) idx.push(i); (await out.copyPages(srcDoc, idx)).forEach(p => out.addPage(p));
-                saveAs(new Blob([await out.save()], {type:"application/pdf"}), "split_pages.pdf");
-            }
-            else if (state.tool === "compress") {
-                const tuningSliderVal = parseFloat($("cs").value); const qualityFactor = tuningSliderVal / 100; const proxy = await pdfjsLib.getDocument({ data: targetActiveFileBuffer.slice(0) }).promise; const out = await PDFLib.PDFDocument.create();
-                for (let i = 1; i <= proxy.numPages; i++) { const pg = await proxy.getPage(i); const vp = pg.getViewport({ scale: 1.4 }); const cvs = document.createElement("canvas"); cvs.width = vp.width; cvs.height = vp.height; await pg.render({ canvasContext: cvs.getContext("2d"), viewport: vp }).promise; const ib = await (await fetch(cvs.toDataURL("image/jpeg", qualityFactor))).arrayBuffer(); out.addPage([vp.width, vp.height]).drawImage(await out.embedJpg(ib), { x: 0, y: 0, width: vp.width, height: vp.height }); }
-                saveAs(new Blob([await out.save()], { type: "application/pdf" }), "compressed_" + state.originalFilename);
-            }
-            else if (state.tool === "imgcompress") {
-                const scaleVal = parseFloat($("cs").value) / 100; const imageEl = new Image();
-                imageEl.onload = function() {
-                    const cvs = document.createElement("canvas"); cvs.width = imageEl.width; cvs.height = imageEl.height;
-                    cvs.getContext("2d").drawImage(imageEl, 0, 0);
-                    cvs.toBlob(blobData => { saveAs(blobData, "optimized_" + state.originalFilename); progress(100); toast("Image compressed successfully!", "ok"); }, state.files[0].type, scaleVal);
-                };
-                imageEl.src = URL.createObjectURL(state.files[0]); return;
-            }
-            else if (state.tool === "rotate") {
-                const selectedPages = [...document.querySelectorAll('.page-thumb.sel')].map(e => parseInt(e.dataset.page)); const rotDeg = parseInt($("rot-dir-val").value) || 90; const outputPdfDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); const pages = outputPdfDoc.getPages();
-                for (const pageNum of selectedPages) { const pg = pages[pageNum - 1]; if(pg) pg.setRotation(PDFLib.degrees(((pg.getRotation().angle || 0) + rotDeg) % 360)); }
-                saveAs(new Blob([await outputPdfDoc.save()], { type: "application/pdf" }), "rotated_output.pdf");
-            }
-            else if (state.tool === "protect") {
-                const p1 = $("pass1").value, p2 = $("pass2").value; if(!p1 || p1 !== p2) { toast("Passwords validation match error.", "err"); progress(100); return; }
-                const outputPdfDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); outputPdfDoc.encrypt({ userPassword: p1, ownerPassword: p1 + "_master_studio_sign_lock", permissions: { printing: 'highResolution', modifying: false, copying: false } });
-                saveAs(new Blob([await outputPdfDoc.save()], { type: "application/pdf" }), "secured_protected.pdf");
-            }
-            else if (state.tool === "editor") {
-                const outputPdfDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); const fontRef = await outputPdfDoc.embedFont(PDFLib.StandardFonts.Helvetica); const pdfPagesList = outputPdfDoc.getPages();
-                state.canvasDataBlocks.forEach(block => {
-                    if (block.text === block.originalText) return; const targetPage = pdfPagesList[block.page - 1]; if(!targetPage) return;
-                    const isTemplateTextOriginallyVertical = Math.abs(block.rawTransform[1]) > 0.1 || Math.abs(block.rawTransform[2]) > 0.1; const baseWidth = block.blockWidth > 0 ? block.blockWidth : (block.originalText.length * block.fontSize * 0.55); const baseHeight = block.fontSize;
-                    let maskWidth, maskHeight, maskXOffset, maskYOffset;
-                    if (isTemplateTextOriginallyVertical) { maskWidth = baseHeight + 16; maskHeight = baseWidth + 30; maskXOffset = maskWidth / 2; maskYOffset = 10; } else { maskWidth = baseWidth + 32; maskHeight = baseHeight + 16; maskXOffset = 16; maskYOffset = 8; }
-                    targetPage.drawRectangle({ x: block.origX - maskXOffset, y: block.origY - maskYOffset, width: maskWidth, height: maskHeight, color: PDFLib.rgb(1, 1, 1), opacity: 1.0 });
-                    if (block.text.trim().length > 0) { targetPage.drawText(block.text, { x: block.origX, y: block.origY, size: block.fontSize, font: fontRef, color: PDFLib.rgb(0, 0, 0), rotate: PDFLib.degrees(block.customRotation) }); }
-                });
-                saveAs(new Blob([await outputPdfDoc.save()], { type: "application/pdf" }), "edited_" + state.originalFilename);
-            }
-            else if (state.tool === "watermark") {
-                const outputPdfDoc = await PDFLib.PDFDocument.load(targetActiveFileBuffer); const pdfPagesList = outputPdfDoc.getPages();
-                for(const layer of state.stampImageLayers) {
-                    const targetPage = pdfPagesList[layer.page - 1]; if(!targetPage) continue; const { height: pageH } = targetPage.getSize(); const scaleFactor = 1.35; const absolutePdfX = layer.scaleX / scaleFactor; const absolutePdfY = (pageH * scaleFactor - layer.scaleY) / scaleFactor;
-                    if(layer.type === "text") {
-                        const standardFontKey = layer.fontNameFamily === "Courier" ? PDFLib.StandardFonts.CourierBold : layer.fontNameFamily === "Times" ? PDFLib.StandardFonts.TimesRomanBold : PDFLib.StandardFonts.HelveticaBold;
-                        const embeddedFontRef = await outputPdfDoc.embedFont(standardFontKey); const hex = layer.fontColorHex;
-                        let r = 0.91, g = 0.28, b = 0.23;
-                        if (!hex.startsWith("var")) { r = parseInt(hex.slice(1,3),16)/255; g = parseInt(hex.slice(3,5),16)/255; b = parseInt(hex.slice(5,7),16)/255; }
-                        else if (state.activeBrand === "image") { r = 0.16; g = 0.5; b = 0.89; }
-                        targetPage.drawText(layer.text, { x: absolutePdfX, y: absolutePdfY - (layer.fontSize * 0.8), size: layer.fontSize, font: embeddedFontRef, color: PDFLib.rgb(r,g,b), opacity: 0.75 });
-                    } 
-                    else if(layer.type === "image") {
-                        const imgBuffer = await layer.fileHandle.arrayBuffer(); const isPNG = layer.fileHandle.name.toLowerCase().endsWith(".png");
-                        targetPage.drawImage(isPNG ? await outputPdfDoc.embedPng(imgBuffer) : await outputPdfDoc.embedJpg(imgBuffer), { x: absolutePdfX, y: absolutePdfY - (layer.height / scaleFactor), width: layer.width / scaleFactor, height: layer.height / scaleFactor, opacity: 1.0 });
-                    }
+    // ── SERVER PROCESSING BRIDGE ──
+    function apiProcessRequest(tool, files, meta, onProgress) {
+        return new Promise((resolve, reject) => {
+            const formData = new FormData();
+            files.forEach(file => formData.append("files", file, file.name || "file"));
+            formData.append("meta", JSON.stringify(meta || {}));
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", `/api/tools/${encodeURIComponent(tool)}`);
+            xhr.responseType = "blob";
+            xhr.timeout = 10 * 60 * 1000;
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable && onProgress) onProgress(10 + (event.loaded / event.total) * 35);
+            };
+            xhr.onload = async () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const header = xhr.getResponseHeader("X-Output-Filename") || "output";
+                    let filename = header;
+                    try { filename = decodeURIComponent(header); } catch (error) {}
+                    const originalSize = Number(xhr.getResponseHeader("X-Original-Size"));
+                    const outputSize = Number(xhr.getResponseHeader("X-Output-Size"));
+                    resolve({
+                        blob: xhr.response,
+                        filename,
+                        originalSize: Number.isFinite(originalSize) && originalSize > 0 ? originalSize : null,
+                        outputSize: Number.isFinite(outputSize) && outputSize > 0 ? outputSize : null,
+                    });
+                    return;
                 }
-                saveAs(new Blob([await outputPdfDoc.save()], { type: "application/pdf" }), "visual_watermarked.pdf");
+                let message = `Request failed (${xhr.status}).`;
+                try {
+                    const text = await xhr.response.text();
+                    const parsed = JSON.parse(text);
+                    if (parsed && parsed.error) message = parsed.error;
+                } catch (error) {}
+                reject(new Error(message));
+            };
+            xhr.onerror = () => reject(new Error("Could not reach the processing server. Make sure the backend is running."));
+            xhr.ontimeout = () => reject(new Error("Processing took too long. Please try again with a smaller file."));
+            xhr.send(formData);
+        });
+    }
+
+    function buildToolRequestMeta() {
+        const meta = {};
+        if (state.tool === "merge") {
+            if (!state.mergeOrder.length) throw new Error("Keep at least one page before merging.");
+            meta.order = state.mergeOrder.map((entry) => ({ fileIndex: entry.fileIndex, pageIndex: entry.pageIndex }));
+        } else if (state.tool === "split") {
+            meta.mode = $("split-mode") ? $("split-mode").value : "select";
+            if (meta.mode === "range") {
+                const start = parseInt($("ss").value, 10);
+                const end = parseInt($("se").value, 10);
+                if (!Number.isFinite(start) || start < 1) throw new Error("Enter a valid start page (1 or higher).");
+                if (!Number.isFinite(end) || end < start) throw new Error("The end page must be the same as or after the start page.");
+                meta.start = start;
+                meta.end = end;
+            } else {
+                if (!state.splitPages.length) throw new Error("Select at least one page to extract.");
+                meta.pages = [...state.splitPages].sort((left, right) => left - right);
             }
-            else if (state.tool === "word2pdf") {
-                const result = await mammoth.convertToHtml({ arrayBuffer: targetActiveFileBuffer }); const outDoc = await PDFLib.PDFDocument.create(); const font = await outDoc.embedFont(PDFLib.StandardFonts.Helvetica); let pg = outDoc.addPage([595, 842]);
-                const cleanLines = result.value.replace(/<\/?[^>]+(>|$)/g, "\n").split("\n").filter(l=>l.trim()); let currY = 760;
-                cleanLines.forEach(line => { if(currY < 50) { pg = outDoc.addPage([595,842]); currY = 800; } try { pg.drawText(sanitize(line).substring(0,80), { x: 50, y: currY, size: 10, font }); } catch(e){} currY -= 16; });
-                saveAs(new Blob([await outDoc.save()], {type:"application/pdf"}), "word_converted.pdf");
+        } else if (state.tool === "compress" || state.tool === "imgcompress") {
+            meta.quality = parseFloat($("cs").value) / 100;
+        } else if (state.tool === "pagenum") {
+            const startNumber = parseInt($("pn-start").value, 10);
+            const fontSize = parseFloat($("pn-size").value);
+            if (!Number.isFinite(startNumber) || startNumber < 0) throw new Error("Enter a valid starting page number (0 or higher).");
+            if (!Number.isFinite(fontSize) || fontSize < 6 || fontSize > 72) throw new Error("Choose a font size between 6 and 72.");
+            meta.position = $("pn-position").value;
+            meta.format = $("pn-format").value;
+            meta.startNumber = startNumber;
+            meta.fontSize = fontSize;
+            meta.colorHex = $("pn-color").value;
+            meta.bold = $("pn-bold").checked;
+        } else if (state.tool === "rotate") {
+            meta.pages = [...document.querySelectorAll(".page-thumb.sel")].map(el => parseInt(el.dataset.page, 10)).filter(Boolean);
+            if (!meta.pages.length) throw new Error("Select at least one page to rotate.");
+            meta.degrees = parseInt($("rot-dir-val").value, 10) || 90;
+        } else if (state.tool === "protect") {
+            const password = $("pass1").value;
+            if (!password) throw new Error("Please enter a password.");
+            if (password.length < 4) throw new Error("Use a password with at least 4 characters.");
+            if (password !== $("pass2").value) throw new Error("The passwords do not match.");
+            meta.password = password;
+        } else if (state.tool === "editor") {
+            const edits = state.canvasDataBlocks
+                .filter(block => block.text !== block.originalText || (block.customRotation || 0) !== 0)
+                .map(block => ({
+                    page: block.page,
+                    origX: block.origX,
+                    origY: block.origY,
+                    fontSize: block.fontSize,
+                    originalText: block.originalText,
+                    text: block.text,
+                    blockWidth: block.blockWidth,
+                    customRotation: block.customRotation || 0,
+                    rawTransform: block.rawTransform,
+                }));
+            if (!edits.length) throw new Error("No changes were made. Edit a text row or rotate it before exporting.");
+            meta.edits = edits;
+        } else if (state.tool === "watermark") {
+            if (!state.stampImageLayers.length) throw new Error("Add a text watermark or image stamp first.");
+            meta.brand = state.activeBrand;
+            meta.layers = state.stampImageLayers.map(layer => ({
+                type: layer.type,
+                page: layer.page || 1,
+                text: layer.text,
+                scaleX: layer.scaleX,
+                scaleY: layer.scaleY,
+                fontSize: layer.fontSize,
+                fontColorHex: layer.fontColorHex,
+                fontNameFamily: layer.fontNameFamily,
+                width: layer.width,
+                height: layer.height,
+                dataUrl: layer.type === "image" ? layer.rawDataUrl : null,
+            }));
+        }
+        return meta;
+    }
+
+    async function executeTargetPipelineProcessingRoutine() {
+        if (!state.files || !state.files.length) { toast("Please select a file first.", "err"); return; }
+
+        let meta;
+        try { meta = buildToolRequestMeta(); }
+        catch (error) { toast(error.message, "err"); return; }
+
+        const button = $("go-btn");
+        const originalButtonHtml = button ? button.innerHTML : "";
+        if (button) { button.disabled = true; button.style.opacity = "0.7"; button.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing…`; }
+
+        progress(12);
+        let displayedProgress = 12;
+        const ticker = setInterval(() => {
+            displayedProgress = Math.min(90, displayedProgress + Math.max(1, (92 - displayedProgress) * 0.07));
+            progress(displayedProgress);
+        }, 400);
+
+        try {
+            const result = await apiProcessRequest(state.tool, state.files, meta, (value) => {
+                displayedProgress = Math.max(displayedProgress, value);
+                progress(displayedProgress);
+            });
+            saveAs(result.blob, result.filename);
+            progress(100);
+            if (state.tool === "compress" && result.originalSize && result.outputSize) {
+                const saved = result.originalSize - result.outputSize;
+                if (saved > 0) {
+                    const percent = Math.round((saved / result.originalSize) * 100);
+                    toast(`Compressed ${formatBytes(result.originalSize)} → ${formatBytes(result.outputSize)} (${percent}% smaller)`, "ok");
+                } else {
+                    toast("This PDF is already optimised — returning the smallest safe copy.", "ok");
+                }
+            } else {
+                toast("Task completed successfully!", "ok");
             }
-            else if (state.tool === "xls2pdf") {
-                const workbook = XLSX.read(targetActiveFileBuffer, { type: 'array' }); const outDoc = await PDFLib.PDFDocument.create(); const font = await outDoc.embedFont(PDFLib.StandardFonts.HelveticaBold); let pg = outDoc.addPage([841, 595]);
-                pg.drawText(`Excel Sheet Render Layout Matrix`, { x: 50, y: 540, size: 12, font }); saveAs(new Blob([await outDoc.save()], {type:"application/pdf"}), "excel_converted.pdf");
-            }
-            else if (state.tool === "pdf2word") {
-                const proxy = await pdfjsLib.getDocument({ data: targetActiveFileBuffer }).promise; const paragraphs = [];
-                for (let i = 1; i <= proxy.numPages; i++) { paragraphs.push(`--- Page ${i} ---`); const content = await (await proxy.getPage(i)).getTextContent(); content.items.forEach(item => { if(item.str.trim()) paragraphs.push(item.str); }); }
-                saveAs(await buildDocxBlob(paragraphs), "extracted_doc.docx");
-            }
-            else if (state.tool === "jpg2png") { saveAs(state.files[0], "lossless_converted_image.png"); }
-            else if (state.tool === "png2jpg") { saveAs(state.files[0], "compressed_converted_image.jpg"); }
-            else if (state.tool === "pdf2img") {
-                const doc = await pdfjsLib.getDocument({data: targetActiveFileBuffer}).promise; const zip = new JSZip(); const cvs = document.createElement("canvas"); const ctx = cvs.getContext("2d");
-                for (let i = 1; i <= doc.numPages; i++) { const pg = await doc.getPage(i); const vp = pg.getViewport({scale:2}); cvs.width = vp.width; cvs.height = vp.height; await pg.render({canvasContext:ctx, viewport:vp}).promise; zip.file(`page_${i}.png`, cvs.toDataURL("image/png").split(",")[1], {base64:true}); }
-                saveAs(await zip.generateAsync({type:"blob"}), "pages_images.zip");
-            }
-            else if (state.tool === "img2pdf") {
-                const out = await PDFLib.PDFDocument.create(); const buf = await state.files[0].arrayBuffer();
-                const isPNG = state.files[0].name.toLowerCase().endsWith(".png"); const emb = isPNG ? await out.embedPng(buf) : await out.embedJpg(buf);
-                const sc = emb.scale(0.5); out.addPage([sc.width, sc.height]).drawImage(emb, {x:0,y:0,width:sc.width,height:sc.height});
-                saveAs(new Blob([await out.save()], {type:"application/pdf"}), "compiled_images.pdf");
-            }
-            progress(100); toast("Task completed successfully!", "ok");
-        } catch(e) { console.error(e); toast("error: processing pipeline error.", "err"); progress(100); }
+        } catch (error) {
+            console.error(error);
+            toast(error.message || "Processing failed. Please try again.", "err");
+            progress(100);
+        } finally {
+            clearInterval(ticker);
+            if (button) { button.disabled = false; button.style.opacity = ""; button.innerHTML = originalButtonHtml; }
+        }
     }
 
     function toast(msg, type = "ok") {
